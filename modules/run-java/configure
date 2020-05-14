@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+CURRENT_DIR=$(dirname $0)
+
+mkdir -p /opt/run-java/
+cp /tmp/artifacts/run-java.sh /opt/run-java/run-java.sh
+
+chmod a+x /opt/run-java/run-java.sh

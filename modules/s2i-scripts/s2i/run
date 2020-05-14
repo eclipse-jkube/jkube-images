@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec /opt/run-java/run-java.sh "$@" ${JAVA_ARGS}

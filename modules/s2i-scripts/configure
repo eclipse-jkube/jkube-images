@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+CURRENT_DIR=$(dirname $0)
+
+mkdir -p "/deployments"
+chmod -R a+rX "/deployments"
+
+cp -rv ${CURRENT_DIR}/s2i /usr/local/s2i
+chmod 755 -R /usr/local/s2i/
