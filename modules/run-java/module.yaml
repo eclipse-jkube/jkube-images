@@ -1,0 +1,10 @@
+schema_version: 1
+version: 1.0.0
+name: run-java
+artifacts:
+  - name: run-java.sh
+    target: run-java.sh
+    url: https://github.com/fabric8io-images/run-java-sh/raw/v1.3.7/fish-pepper/run-java-sh/fp-files/run-java.sh
+    md5: 7aca80ac93155b940fc61cabfa56538b
+execute:
+  - script: configure

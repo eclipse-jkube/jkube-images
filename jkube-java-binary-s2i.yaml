@@ -1,0 +1,56 @@
+schema_version: 1
+
+name: "quay.io/jkube/jkube-java-binary-s2i"
+description: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
+version: "SNAPSHOT"
+from: "registry.access.redhat.com/ubi8/ubi-minimal:8.0"
+
+labels:
+  - name: "io.k8s.display-name"
+    value: "Eclipse JKube - Java S2I (UBI8)"
+  - name: "io.k8s.description"
+    value: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
+  - name: "io.openshift.tags"
+    value: "builder,jkube,java"
+  - name: "io.openshift.s2i.scripts-url"
+    value: "image:///usr/local/s2i"
+  - name: "io.openshift.s2i.destination"
+    value: "/tmp"
+  - name: "maintainer"
+    value: "Eclipse JKube Team <jkube-dev@eclipse.org>"
+
+envs:
+  - name: DEPLOYMENTS_DIR
+    value: "/deployments"
+  - name: JOLOKIA_VERSION
+    value: "1.6.2"
+  - name: PROMETHEUS_JMX_EXPORTER_VERSION
+    value: "0.3.1"
+  - name: AB_JOLOKIA_PASSWORD_RANDOM
+    value: "true"
+  - name: AB_JOLOKIA_AUTH_OPENSHIFT
+    value: "true"
+  - name: JAVA_MAJOR_VERSION
+    value: "11"
+  - name: JAVA_DATA_DIR
+    value: "/deployments/data"
+  - name: PATH
+    value: "$PATH:/usr/local/s2i"
+
+packages:
+  manager: microdnf
+  install:
+    - java-11-openjdk-headless
+
+modules:
+  repositories:
+    - path: modules
+  install:
+    - name: run-java
+    - name: s2i-scripts
+
+
+run:
+  user: 1000
+  cmd:
+    - "/usr/local/s2i/run"
