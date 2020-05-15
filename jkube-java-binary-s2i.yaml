@@ -2,7 +2,7 @@ schema_version: 1
 
 name: "quay.io/jkube/jkube-java-binary-s2i"
 description: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
-version: "latest"
+version: "SNAPSHOT"
 from: "registry.access.redhat.com/ubi8/ubi-minimal:8.0"
 
 labels:
