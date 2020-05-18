@@ -20,9 +20,7 @@ jobs:
         run: ./scripts/install-cekit.sh
       - name: Get Tag
         id: get_version
-        run: |
-          export GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
-          echo ::set-env name=TAG::${GITHUB_TAG/v/}
+        run: echo ::set-env name=TAG::${GITHUB_REF/refs\/tags\/v/}
       - name: Build ${{ matrix.image }}
         run: |
           echo "Building quay.io/jkube/${{ matrix.image }}/image:${TAG}"
