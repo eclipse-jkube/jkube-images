@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ['java-binary-s2i']
+        image: ['jkube-java-binary-s2i']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,7 +20,9 @@ jobs:
         run: ./scripts/install-cekit.sh
       - name: Get Tag
         id: get_version
-        run: echo ::set-env name=TAG::${GITHUB_REF/refs\/tags\/v/}
+        run: |
+          export GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
+          echo ::set-env name=TAG::${GITHUB_TAG/v/}
       - name: Build ${{ matrix.image }}
         run: |
           echo "Building quay.io/jkube/${{ matrix.image }}/image:${TAG}"
