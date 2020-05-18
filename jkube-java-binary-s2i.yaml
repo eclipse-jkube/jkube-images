@@ -2,7 +2,7 @@ schema_version: 1
 
 name: "quay.io/jkube/jkube-java-binary-s2i"
 description: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
-version: "SNAPSHOT"
+version: "latest"
 from: "registry.access.redhat.com/ubi8/ubi-minimal:8.0"
 
 labels:
@@ -22,33 +22,30 @@ labels:
 envs:
   - name: DEPLOYMENTS_DIR
     value: "/deployments"
-  - name: JOLOKIA_VERSION
-    value: "1.6.2"
-  - name: PROMETHEUS_JMX_EXPORTER_VERSION
-    value: "0.3.1"
-  - name: AB_JOLOKIA_PASSWORD_RANDOM
-    value: "true"
-  - name: AB_JOLOKIA_AUTH_OPENSHIFT
-    value: "true"
-  - name: JAVA_MAJOR_VERSION
-    value: "11"
-  - name: JAVA_DATA_DIR
-    value: "/deployments/data"
   - name: PATH
     value: "$PATH:/usr/local/s2i"
-
-packages:
-  manager: microdnf
-  install:
-    - java-11-openjdk-headless
 
 modules:
   repositories:
     - path: modules
+    - name: cct_module
+      git:
+        url: https://github.com/jboss-openshift/cct_module.git
+        ref: 0.41.0
   install:
-    - name: run-java
+    - name: jboss.container.microdnf-bz-workaround
+    - name: jboss.container.openjdk.jdk
+      version: "11"
+    - name: jboss.container.prometheus
+    - name: jboss.container.jolokia
+    - name: jboss.container.dnf
+    - name: jboss.container.java.s2i.bash
+    - name: jboss.container.java.singleton-jdk
+    - name: jboss.container.java.run.bash
+    - name: jboss.container.jolokia
+    - name: jboss.container.prometheus
+    - name: jboss.container.util.logging.bash
     - name: s2i-scripts
-
 
 run:
   user: 1000

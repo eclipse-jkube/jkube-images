@@ -1,0 +1,29 @@
+name: Push Images
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-images:
+    name: Build Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install CEKit
+        run: ./scripts/install-cekit.sh
+      - name: Get Tag
+        id: get_version
+        run: echo ::set-output name=TAG::${GITHUB_REF/refs\/tags\//}
+      - name: Build java-binary-s2i
+        run: |
+          virtualenv --python=python3 ~/cekit
+          source ~/cekit/bin/activate
+          cekit --descriptor jkube-java-binary-s2i.yaml build docker --tag="${TAG}"
+      - name: Push quay.io/jkube/jkube-java-binary-s2i
+        run: |
+          docker login -u=${{ secrets.QUAY_USER }} -p=${{ secrets.QUAY_TOKEN }} quay.io
+          docker push quay.io/jkube/jkube-java-binary-s2i
+
