@@ -9,6 +9,10 @@ jobs:
   build-images:
     name: Build Images
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['java-binary-s2i']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -16,15 +20,16 @@ jobs:
         run: ./scripts/install-cekit.sh
       - name: Get Tag
         id: get_version
-        run: echo ::set-env name=TAG::${GITHUB_REF/refs\/tags\//}
-      - name: Build java-binary-s2i
+        run: echo ::set-env name=TAG::${${GITHUB_REF/refs\/tags\//}/v/}
+      - name: Build ${{ matrix.image }}
         run: |
-          echo "Pushing image for tag: ${TAG}"
+          echo "Building quay.io/jkube/${{ matrix.image }}/image:${TAG}"
           virtualenv --python=python3 ~/cekit
           source ~/cekit/bin/activate
-          cekit --descriptor jkube-java-binary-s2i.yaml build docker --tag="${TAG}"
-      - name: Push quay.io/jkube/jkube-java-binary-s2i
+          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="${TAG}"
+      - name: Push quay.io/jkube/${{ matrix.image }}
         run: |
+          echo "Pushing quay.io/jkube/${{ matrix.image }}/image:${TAG}"
           docker login -u=${{ secrets.QUAY_USER }} -p=${{ secrets.QUAY_TOKEN }} quay.io
-          docker push quay.io/jkube/jkube-java-binary-s2i
+          docker push quay.io/jkube/${{ matrix.image }}:${TAG}
 
