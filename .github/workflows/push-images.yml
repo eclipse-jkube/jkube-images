@@ -22,16 +22,16 @@ jobs:
         id: get_version
         run: |
           export GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
-          echo ::set-env name=TAG::${GITHUB_TAG/v/}
+          echo ::set-env name=TAG::quay.io/jkube/${{ matrix.image }}/image:${GITHUB_TAG/v/}
       - name: Build ${{ matrix.image }}
         run: |
-          echo "Building quay.io/jkube/${{ matrix.image }}/image:${TAG}"
+          echo "Building ${TAG}"
           virtualenv --python=python3 ~/cekit
           source ~/cekit/bin/activate
           cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="${TAG}"
       - name: Push quay.io/jkube/${{ matrix.image }}
         run: |
-          echo "Pushing quay.io/jkube/${{ matrix.image }}/image:${TAG}"
+          echo "Pushing ${TAG}"
           docker login -u=${{ secrets.QUAY_USER }} -p=${{ secrets.QUAY_TOKEN }} quay.io
-          docker push quay.io/jkube/${{ matrix.image }}:${TAG}
+          docker push ${TAG}
 

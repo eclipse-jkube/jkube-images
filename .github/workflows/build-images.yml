@@ -27,4 +27,4 @@ jobs:
           echo "Building quay.io/jkube/${{ matrix.image }}/image:${TAG}"
           virtualenv --python=python3 ~/cekit
           source ~/cekit/bin/activate
-          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="${TAG}"
+          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="quay.io/jkube/${{ matrix.image }}/image:${TAG}"
