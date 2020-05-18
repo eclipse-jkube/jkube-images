@@ -16,9 +16,10 @@ jobs:
         run: ./scripts/install-cekit.sh
       - name: Get Tag
         id: get_version
-        run: echo ::set-output name=TAG::${GITHUB_REF/refs\/tags\//}
+        run: echo ::set-env name=TAG::${GITHUB_REF/refs\/tags\//}
       - name: Build java-binary-s2i
         run: |
+          echo "Pushing image for tag: ${TAG}"
           virtualenv --python=python3 ~/cekit
           source ~/cekit/bin/activate
           cekit --descriptor jkube-java-binary-s2i.yaml build docker --tag="${TAG}"
