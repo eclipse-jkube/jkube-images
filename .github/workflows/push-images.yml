@@ -22,7 +22,7 @@ jobs:
         id: get_version
         run: |
           export GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
-          echo ::set-env name=TAG::quay.io/jkube/${{ matrix.image }}/image:${GITHUB_TAG/v/}
+          echo ::set-env name=TAG::quay.io/jkube/${{ matrix.image }}:${GITHUB_TAG/v/}
       - name: Build ${{ matrix.image }}
         run: |
           echo "Building ${TAG}"

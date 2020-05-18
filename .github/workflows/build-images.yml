@@ -24,7 +24,7 @@ jobs:
         run: ./scripts/install-cekit.sh
       - name: Build java-binary-s2i
         run: |
-          echo "Building quay.io/jkube/${{ matrix.image }}/image:${TAG}"
+          echo "Building quay.io/jkube/${{ matrix.image }}:${TAG}"
           virtualenv --python=python3 ~/cekit
           source ~/cekit/bin/activate
-          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="quay.io/jkube/${{ matrix.image }}/image:${TAG}"
+          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="quay.io/jkube/${{ matrix.image }}:${TAG}"
