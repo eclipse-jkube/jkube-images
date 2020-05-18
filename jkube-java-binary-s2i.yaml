@@ -25,6 +25,9 @@ envs:
   - name: PATH
     value: "$PATH:/usr/local/s2i"
 
+packages:
+  manager: microdnf
+
 modules:
   repositories:
     - path: modules
