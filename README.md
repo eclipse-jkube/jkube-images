@@ -2,7 +2,7 @@
 
 This repository contains some of the container images used by [Eclipse JKube](https://github.com/eclipse/jkube).
 
-These images are avaialble on [Quay.io](https://quay.io/organization/jkube)
+These images are available on [Quay.io](https://quay.io/organization/jkube)
 
 ## Available images
 
@@ -57,3 +57,8 @@ Available environment variables for runtime configuration:
 * **`no_proxy`** / **NO_PROXY** A comma separated lists of hosts, IP addresses or domains that can be accessed directly.
   This will be used for both Maven builds and Java runtime.
 
+### jkube-tomcat9-binary-s2i
+
+https://quay.io/repository/jkube/jkube-tomcat9-binary-s2i
+
+Base image to be used by any `WebAppGenerator` & `TomcatAppSeverHandler` implementation.

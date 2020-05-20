@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+CURRENT_DIR=$(dirname $0)
+
+mkdir -p "/deployments"
+chmod -R a+rwX "/deployments"
+
+chown -hR 1000 "$CATALINA_HOME"
+chmod -R a+rw "$CATALINA_HOME/conf"
+chmod -R a+rw "$CATALINA_HOME/logs"
+chmod -R a+rw "$CATALINA_HOME/temp"
+chmod -R a+rw "$CATALINA_HOME/webapps"
+chmod -R a+rw "$CATALINA_HOME/work"
+
+cp -rv ${CURRENT_DIR}/s2i /usr/local/s2i
+chmod 755 -R /usr/local/s2i/
