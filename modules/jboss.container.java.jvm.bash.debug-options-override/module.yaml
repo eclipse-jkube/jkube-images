@@ -1,0 +1,6 @@
+schema_version: 1
+version: 1.0.0
+name: jboss.container.java.jvm.bash.debug-options-override
+description: Overrides debug-options script defined in jboss module.
+execute:
+  - script: configure.sh
