@@ -37,7 +37,7 @@ Available environment variables for runtime configuration:
   container then this option has no effect. If there is a memory constraint then `-Xmx` is set to a ratio of the
   container available memory as set here. The default is `50` which means 50% of the available memory is used as an upper
   boundary. You can skip this mechanism by setting this value to `0` in which case no `-Xmx` option is added.
-* **`JAVA_DIAGNOSTICS*`* Set this to get some diagnostics information to standard output when things are happening.
+* **`JAVA_DIAGNOSTICS`** Set this to get some diagnostics information to standard output when things are happening.
   **Disabled by default.**
 * **`JAVA_MAIN_CLASS`** A main class to use as argument for `java`. When this environment variable is given, all jar
   files in **JAVA_APP_DIR** are added to the classpath as well as **JAVA_LIB_DIR**.
@@ -48,7 +48,7 @@ Available environment variables for runtime configuration:
   `**JAVA_APP_DIR/classpath**` and use its content literally as classpath. If this file doesn't exists all jars in the
   app dir are added (`classes:**JAVA_APP_DIR/***`).
 * **`JAVA_DEBUG`** If set remote debugging will be switched on. **Disabled by default.**
-* ~~**`JAVA_DEBUG_SUSPEND`** If set enables suspend mode in remote debugging~~ (Not available in CEKit module)
+* **`JAVA_DEBUG_SUSPEND`** If set enables suspend mode in remote debugging
 * **`JAVA_DEBUG_PORT`** Port used for remote debugging. Defaults to *5005*.
 * **`HTTP_PROXY`** The location of the https proxy. This takes precedence over **http_proxy** and **HTTP_PROXY**, and
   will be used for both Maven builds and Java runtime.
