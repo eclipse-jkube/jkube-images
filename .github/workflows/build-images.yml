@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ['jkube-java-binary-s2i']
+        image: ['jkube-java-binary-s2i', 'jkube-tomcat9-binary-s2i']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
