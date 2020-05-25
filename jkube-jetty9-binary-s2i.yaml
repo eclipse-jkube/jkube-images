@@ -1,0 +1,51 @@
+schema_version: 1
+
+name: "quay.io/jkube/jkube-jetty9-binary-s2i"
+description: "Base image for Jetty 9 webapp deployments"
+version: "latest"
+from: "jetty:9.4.27-jre11"
+
+labels:
+  - name: "io.k8s.display-name"
+    value: "Eclipse JKube - Jetty 9"
+  - name: "io.k8s.description"
+    value: "Base image for Jetty 9 webapp deployments"
+  - name: "io.openshift.tags"
+    value: "builder,jkube,jetty"
+  - name: "io.openshift.s2i.scripts-url"
+    value: "image:///usr/local/s2i"
+  - name: "io.openshift.s2i.destination"
+    value: "/tmp"
+  - name: "maintainer"
+    value: "Eclipse JKube Team <jkube-dev@eclipse.org>"
+
+envs:
+  - name: DEPLOYMENTS_DIR
+    value: "/deployments"
+  - name: JETTY_HOME
+    value: "/usr/local/jetty"
+    description: Jetty's home directory. For legacy support, webapps can be deployed in the webapps subdirectory, JETTY_BASE is preferred.
+  - name: JETTY_BASE
+    value: "/var/lib/jetty"
+    description: Webapps should be deployed in webapps subdirectory.
+  - name: TMPDIR
+    value: "/tmp/jetty"
+  - name: PATH
+    value: "$PATH:$JETTY_HOME/bin:/usr/local/s2i"
+
+packages:
+  manager: microdnf
+
+modules:
+  repositories:
+    - path: modules
+  install:
+    - name: s2i-jetty
+
+ports:
+  - value: 8080
+
+run:
+  user: 1000
+  cmd:
+    - "/usr/local/s2i/run"

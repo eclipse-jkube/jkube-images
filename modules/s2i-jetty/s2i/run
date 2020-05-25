@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+appDir=${DEPLOY_DIR:-/deployments}
+echo "Checking *.war in $appDir"
+if [ -d ${appDir} ]; then
+  target="${JETTY_BASE}/webapps"
+  for i in ${appDir}/*.war; do
+     file=$(basename ${i})
+     echo "Linking $i --> $target"
+     if [ -f "${target}/${file}" ]; then
+         rm "${target}/${file}"
+     fi
+     dir=$(basename ${i} .war)
+     if [ x${dir} != x ] && [ -d "${target}/${dir}" ]; then
+         rm -r "$target/${dir}"
+     fi
+     ln -s ${i} "${target}/${file}"
+  done
+fi
+
+exec java -jar "$JETTY_HOME/start.jar"

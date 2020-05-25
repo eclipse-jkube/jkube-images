@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+
+CURRENT_DIR=$(dirname $0)
+
+mkdir -p "/deployments"
+chmod -R a+rwX "/deployments"
+
+chown -hR 1000 "$JETTY_BASE"
+mkdir -p "$JETTY_BASE/webapps"
+chmod -R a+rw "$JETTY_BASE/webapps"
+
+
+chown -hR 1000 "$TMPDIR"
+chmod -R a+rw "$TMPDIR"
+
+# legacy support
+chown -hR 1000 "$JETTY_HOME"
+mkdir -p "$JETTY_HOME/webapps"
+chmod -R a+rw "$JETTY_HOME/webapps"
+
+cp -rv ${CURRENT_DIR}/s2i /usr/local/s2i
+chmod 755 -R /usr/local/s2i/

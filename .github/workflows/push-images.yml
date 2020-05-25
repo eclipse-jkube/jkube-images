@@ -12,12 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ['jkube-java-binary-s2i', 'jkube-tomcat9-binary-s2i']
+        image: ['jkube-java-binary-s2i', 'jkube-jetty9-binary-s2i', 'jkube-tomcat9-binary-s2i']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install CEKit
-        run: ./scripts/install-cekit.sh
+        uses: manusa/actions-setup-cekit@v1.0.0
       - name: Get Tag
         id: get_version
         run: |
@@ -26,8 +26,6 @@ jobs:
       - name: Build ${{ matrix.image }}
         run: |
           echo "Building ${TAG}"
-          virtualenv --python=python3 ~/cekit
-          source ~/cekit/bin/activate
           cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="${TAG}"
       - name: Push quay.io/jkube/${{ matrix.image }}
         run: |
