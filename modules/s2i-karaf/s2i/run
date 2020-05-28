@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+
+exec "$KARAF_HOME/bin/karaf" run

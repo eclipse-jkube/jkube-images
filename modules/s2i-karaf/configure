@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+CURRENT_DIR=$(dirname $0)
+
+mkdir -p "/deployments/"
+chown -hR 1000 "/deployments"
+chmod -R a+rwX "/deployments"
+
+echo "Cleaning up S2I build configuration from parent image"
+rm -rf /usr/local/s2i
+
+echo " Copying S2I build configuration files"
+cp -rv ${CURRENT_DIR}/s2i /usr/local/s2i
+chmod 755 -R /usr/local/s2i/
