@@ -22,7 +22,11 @@ fi
 
 if [ "${JAVA_ENABLE_DEBUG:-false}" = "true" ]; then
   echo "Running Jetty in debug mode"
-  DEBUG_OPTS="-Xdebug -agentlib:jdwp=transport=dt_socket,address=${JAVA_DEBUG_PORT:-5005},server=y,suspend=${JAVA_DEBUG_SUSPEND:-n}"
+  suspend_mode="n"
+  if ! echo "${JAVA_DEBUG_SUSPEND:-n}" | grep -q -e '^\(false\|n\|no\|0\)$'; then
+    suspend_mode="y"
+  fi
+  DEBUG_OPTS="-Xdebug -agentlib:jdwp=transport=dt_socket,address=${JAVA_DEBUG_PORT:-5005},server=y,suspend=${suspend_mode}"
 fi
 
 eval exec java ${DEBUG_OPTS} -jar "$JETTY_HOME/start.jar"

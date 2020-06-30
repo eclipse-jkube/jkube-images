@@ -21,7 +21,9 @@ if [ -d ${appDir} ]; then
 fi
 
 export JPDA_ADDRESS="localhost:${JAVA_DEBUG_PORT:-5005}"
-export JPDA_SUSPEND="${JAVA_DEBUG_SUSPEND:-n}"
+if ! echo "${JAVA_DEBUG_SUSPEND:-n}" | grep -q -e '^\(false\|n\|no\|0\)$'; then
+  export JPDA_SUSPEND="y"
+fi
 
 if [ "${JAVA_ENABLE_DEBUG:-false}" = "true" ]; then
   echo "Running catalina in debug mode ($JPDA_ADDRESS)"
