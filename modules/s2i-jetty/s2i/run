@@ -20,4 +20,9 @@ if [ -d ${appDir} ]; then
   done
 fi
 
-exec java -jar "$JETTY_HOME/start.jar"
+if [ "${JAVA_ENABLE_DEBUG:-false}" = "true" ]; then
+  echo "Running Jetty in debug mode"
+  DEBUG_OPTS="-Xdebug -agentlib:jdwp=transport=dt_socket,address=${JAVA_DEBUG_PORT:-5005},server=y,suspend=${JAVA_DEBUG_SUSPEND:-n}"
+fi
+
+eval exec java ${DEBUG_OPTS} -jar "$JETTY_HOME/start.jar"

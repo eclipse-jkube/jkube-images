@@ -62,3 +62,9 @@ Available environment variables for runtime configuration:
 https://quay.io/repository/jkube/jkube-tomcat9-binary-s2i
 
 Base image to be used by any `WebAppGenerator` & `TomcatAppSeverHandler` implementation.
+
+### jkube-jetty9-binary-s2i
+
+https://quay.io/repository/jkube/jkube-jetty9-binary-s2i
+
+Base image to be used by any `WebAppGenerator` & `JettyAppSeverHandler` implementation.
