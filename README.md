@@ -56,6 +56,8 @@ Available environment variables for runtime configuration:
   **HTTP_PROXY**, and will be used for both Maven builds and Java runtime.
 * **`no_proxy`** / **NO_PROXY** A comma separated lists of hosts, IP addresses or domains that can be accessed directly.
   This will be used for both Maven builds and Java runtime.
+* **AB_PROMETHEUS_OFF** Disables the use of Prometheus Java Agent.
+* **AB_PROMETHEUS_PORT** Port to use for the Prometheus JMX Exporter.
 
 ### jkube-tomcat9-binary-s2i
 

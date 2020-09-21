@@ -49,6 +49,7 @@ modules:
     - name: jboss.container.prometheus
     - name: jboss.container.util.logging.bash
     - name: jboss.container.java.jvm.bash.debug-options-override
+    - name: jboss.container.prometheus-override
     - name: s2i-scripts
 
 run:

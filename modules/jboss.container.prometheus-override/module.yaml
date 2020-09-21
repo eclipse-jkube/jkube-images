@@ -1,0 +1,17 @@
+schema_version: 1
+name: jboss.container.prometheus-override
+version: 1.0.0
+description: ^
+  Overrides prometheus options script defined in jboss module.
+  https://github.com/jboss-openshift/cct_module/tree/8411125f8e1b45d48c93c8bcd51d39541ce4a755/jboss/container/prometheus
+
+envs:
+  - name: AB_PROMETHEUS_OFF
+    description: Disable the use of prometheus agent
+    example: true
+  - name: AB_PROMETHEUS_PORT
+    description: Port to use for the Prometheus JMX Exporter.
+    example: 9799
+
+execute:
+  - script: configure.sh
