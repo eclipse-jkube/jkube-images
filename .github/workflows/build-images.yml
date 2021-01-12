@@ -21,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install CEKit
-        uses: manusa/actions-setup-cekit@v1.0.2
+        uses: manusa/actions-setup-cekit@v1.1.0
       - name: Build java-binary-s2i
         run: |
           echo "Building quay.io/jkube/${{ matrix.image }}:${TAG}"
