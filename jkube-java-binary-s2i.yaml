@@ -50,7 +50,6 @@ modules:
     - name: jboss.container.util.logging.bash
     - name: jboss.container.java.jvm.bash.debug-options-override
     - name: jboss.container.prometheus-override
-    - name: s2i-scripts
 
 run:
   user: 1000
