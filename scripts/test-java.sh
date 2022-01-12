@@ -15,7 +15,7 @@ function dockerRun() {
 
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
-assertContains "$(dockerRun 'java -version')" 'openjdk version "11.0.12"' || reportError "Invalid Java version"
+assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.1"' || reportError "Invalid Java version"
 
 # run-java dependent scripts
 jvm_tools="$(dockerRun 'ls -la /opt/jboss/container/java/jvm/')"
@@ -41,9 +41,9 @@ assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' |
 
 # Env
 env_variables="$(dockerRun 'env')"
-assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-11$" \
+assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-17$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=11$" \
+assertContains "$env_variables" "JAVA_VERSION=17$" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "DEPLOYMENTS_DIR=/deployments$" \
   || reportError "DEPLOYMENTS_DIR invalid"
