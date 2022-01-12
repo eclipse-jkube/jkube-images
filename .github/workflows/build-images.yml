@@ -29,4 +29,4 @@ jobs:
       - name: Test
         if: success() && startsWith(matrix.image, 'jkube-java')
         run: |
-          ./scripts/test-java.sh
+          ./scripts/test-${{ matrix.image }}.sh

@@ -7,12 +7,6 @@ source "$BASEDIR/common.sh"
 
 IMAGE="quay.io/jkube/jkube-java:$TAG_OR_LATEST"
 
-function dockerRun() {
-  read -ra COMMAND <<<"$1"
-  output=$(docker run  --rm --pull never "$IMAGE" "${COMMAND[@]}" 2>&1)
-  echo "$output";
-}
-
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
 assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.1"' || reportError "Invalid Java version"
