@@ -3,7 +3,7 @@ schema_version: 1
 name: "quay.io/jkube/jkube-java"
 description: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
 version: "latest"
-from: "registry.access.redhat.com/ubi8/ubi-minimal:8.4"
+from: "registry.access.redhat.com/ubi8/ubi-minimal:8.5"
 
 labels:
   - name: "io.k8s.display-name"
@@ -34,11 +34,11 @@ modules:
     - name: cct_module
       git:
         url: https://github.com/jboss-openshift/cct_module.git
-        ref: 0.45.2
+        ref: 0.45.3
   install:
     - name: jboss.container.microdnf-bz-workaround
     - name: jboss.container.openjdk.jdk
-      version: "11"
+      version: "17"
     - name: jboss.container.prometheus
     - name: jboss.container.jolokia
     - name: jboss.container.dnf
