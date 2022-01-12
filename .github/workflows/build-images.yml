@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ['jkube-java-binary-s2i', 'jkube-jetty9-binary-s2i', 'jkube-karaf-binary-s2i', 'jkube-tomcat9-binary-s2i']
+        image: ['jkube-java', 'jkube-jetty9', 'jkube-karaf', 'jkube-tomcat9']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -27,6 +27,6 @@ jobs:
           echo "Building quay.io/jkube/${{ matrix.image }}:${TAG}"
           cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="quay.io/jkube/${{ matrix.image }}:${TAG}"
       - name: Test
-        if: success() && startsWith(matrix.image, 'jkube-java-binary-s2i')
+        if: success() && startsWith(matrix.image, 'jkube-java')
         run: |
-          ./scripts/test-java-binary-s2i.sh
+          ./scripts/test-java.sh

@@ -5,7 +5,7 @@ trap 'exit' ERR
 BASEDIR=$(dirname "$BASH_SOURCE")
 source "$BASEDIR/common.sh"
 
-IMAGE="quay.io/jkube/jkube-java-binary-s2i:$TAG_OR_LATEST"
+IMAGE="quay.io/jkube/jkube-java:$TAG_OR_LATEST"
 
 function dockerRun() {
   read -ra COMMAND <<<"$1"
