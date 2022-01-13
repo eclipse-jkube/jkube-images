@@ -22,6 +22,11 @@ debug_options="$(dockerRun 'cat /opt/jboss/container/java/jvm/debug-options')"
 assertContains "$debug_options" "[-]agentlib:jdwp=transport=dt_socket,server=y,suspend=\${suspend_mode},address=\${debug_port}" \
   || reportError "Overridden debug-options is wrong"
 
+# java-default-options override via GC_CONTAINER_OPTIONS env (Unsupported -XX:+UseParallelOldGC is not listed)
+java_default_options="$(dockerRun '/opt/jboss/container/java/jvm/java-default-options')"
+assertContains "$java_default_options" "^-XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:+ExitOnOutOfMemoryError$" \
+  || reportError "Overridden GC_CONTAINER_OPTIONS is not working"
+
 # Default run-java module
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
 assertContains "$run_java" "run-env.sh" || reportError "run-env.sh not found"
@@ -55,3 +60,5 @@ assertContains "$env_variables" "AB_JOLOKIA_HTTPS=true$" \
   || reportError "AB_JOLOKIA_HTTPS invalid"
 assertContains "$env_variables" "AB_PROMETHEUS_JMX_EXPORTER_CONFIG=/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml$" \
   || reportError "AB_PROMETHEUS_JMX_EXPORTER_CONFIG invalid"
+assertContains "$env_variables" "GC_CONTAINER_OPTIONS= $" \
+  || reportError "GC_CONTAINER_OPTIONS invalid"

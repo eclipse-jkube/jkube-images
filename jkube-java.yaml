@@ -24,6 +24,8 @@ envs:
     value: "/deployments"
   - name: PATH
     value: "$PATH:/usr/local/s2i"
+  - name: GC_CONTAINER_OPTIONS
+    value: " "
 
 packages:
   manager: microdnf
