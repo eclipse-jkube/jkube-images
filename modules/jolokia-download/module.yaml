@@ -1,0 +1,15 @@
+schema_version: 1
+version: 1.0.0
+name: jolokia-download
+description: "Downloads the latest Jolokia JVM agent overwriting the one provided by the dnf package."
+envs:
+  - description: Version of Jolokia being used.
+    name: JOLOKIA_VERSION
+    value: 1.7.1
+artifacts:
+  - name: jolokia-jvm.jar
+    target: jolokia-jvm.jar
+    url: https://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.7.1/jolokia-jvm-1.7.1.jar
+    md5: fd48948a8df5ff63ca0bd3624866f967
+execute:
+  - script: configure

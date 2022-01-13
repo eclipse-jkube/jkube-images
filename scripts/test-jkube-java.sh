@@ -54,6 +54,8 @@ assertContains "$env_variables" "JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE=/opt/jboss
   || reportError "JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE invalid"
 assertContains "$env_variables" "JBOSS_CONTAINER_S2I_CORE_MODULE=/opt/jboss/container/s2i/core/$" \
   || reportError "JBOSS_CONTAINER_S2I_CORE_MODULE invalid"
+assertContains "$env_variables" "JOLOKIA_VERSION=1.7.1$" \
+  || reportError "JOLOKIA_VERSION invalid"
 assertContains "$env_variables" "AB_JOLOKIA_PASSWORD_RANDOM=true$" \
   || reportError "AB_JOLOKIA_PASSWORD_RANDOM invalid"
 assertContains "$env_variables" "AB_JOLOKIA_HTTPS=true$" \
