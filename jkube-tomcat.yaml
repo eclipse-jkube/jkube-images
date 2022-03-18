@@ -1,0 +1,45 @@
+schema_version: 1
+
+name: "quay.io/jkube/jkube-tomcat"
+description: "Base image for Apache Tomcat webapp deployments"
+version: "latest"
+from: "tomcat:10.0.18-jdk17-temurin"
+
+labels:
+  - name: "io.k8s.display-name"
+    value: "Eclipse JKube - Tomcat"
+  - name: "io.k8s.description"
+    value: "Base image for Apache Tomcat webapp deployments"
+  - name: "io.openshift.tags"
+    value: "builder,jkube,tomcat"
+  - name: "io.openshift.s2i.scripts-url"
+    value: "image:///usr/local/s2i"
+  - name: "io.openshift.s2i.destination"
+    value: "/tmp"
+  - name: "maintainer"
+    value: "Eclipse JKube Team <jkube-dev@eclipse.org>"
+
+envs:
+  - name: DEPLOYMENTS_DIR
+    value: "/deployments"
+  - name: CATALINA_HOME
+    value: "/usr/local/tomcat"
+  - name: PATH
+    value: "$PATH:$CATALINA_HOME/bin:/usr/local/s2i"
+
+packages:
+  manager: microdnf
+
+modules:
+  repositories:
+    - path: modules
+  install:
+    - name: s2i-tomcat
+
+ports:
+  - value: 8080
+
+run:
+  user: 1000
+  cmd:
+    - "/usr/local/s2i/run"
