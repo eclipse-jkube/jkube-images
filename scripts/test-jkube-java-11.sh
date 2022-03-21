@@ -9,7 +9,7 @@ IMAGE="quay.io/jkube/jkube-java-11:$TAG_OR_LATEST"
 
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
-assertContains "$(dockerRun 'java -version')" 'openjdk version "11.0.13"' || reportError "Invalid Java version"
+assertMatches "$(dockerRun 'java -version')" 'openjdk version "11.0.[0-9]+' || reportError "Invalid Java version"
 
 # run-java dependent scripts
 jvm_tools="$(dockerRun 'ls -la /opt/jboss/container/java/jvm/')"
