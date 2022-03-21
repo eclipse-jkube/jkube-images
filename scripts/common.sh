@@ -12,6 +12,10 @@ function assertContains() {
   echo "$1" | grep "$2" > /dev/null
 }
 
+function assertMatches() {
+  echo "$1" | grep -E "$2" > /dev/null
+}
+
 function reportError() {
   >&2 echo "$1"
   exit 1
