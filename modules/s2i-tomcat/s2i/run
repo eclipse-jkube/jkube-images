@@ -3,9 +3,10 @@
 set -e
 
 appDir=${DEPLOY_DIR:-/deployments}
+webappsDir=${TOMCAT_WEBAPPS_DIR:-"webapps"}
+target="${CATALINA_HOME}/${webappsDir}"
 echo "Checking *.war in $appDir"
 if [ -d ${appDir} ]; then
-  target="${CATALINA_HOME}/webapps"
   for i in ${appDir}/*.war; do
      file=$(basename ${i})
      echo "Linking $i --> $target"
