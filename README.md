@@ -59,11 +59,17 @@ Available environment variables for runtime configuration:
 * **`AB_PROMETHEUS_OFF`** Disables the use of Prometheus Java Agent.
 * **`AB_PROMETHEUS_PORT`** Port to use for the Prometheus JMX Exporter.
 
+### jkube-tomcat
+
+https://quay.io/repository/jkube/jkube-tomcat
+
+Base image to be used by any `WebAppGenerator` & `TomcatAppSeverHandler` implementation.
+
 ### jkube-tomcat9
 
 https://quay.io/repository/jkube/jkube-tomcat9
 
-Base image to be used by any `WebAppGenerator` & `TomcatAppSeverHandler` implementation.
+Base image to be used by any `WebAppGenerator` & `TomcatAppSeverHandler` implementation relying on Tomcat 9.
 
 ### jkube-jetty9
 
