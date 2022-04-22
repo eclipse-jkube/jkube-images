@@ -9,7 +9,7 @@ IMAGE="quay.io/jkube/jkube-jetty9:$TAG_OR_LATEST"
 
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
-assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.1"' || reportError "Invalid Java version"
+assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.2"' || reportError "Invalid Java version"
 
 # S2I scripts
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
@@ -24,7 +24,7 @@ assertContains "$assembleScript" 'copy_dir maven$' || reportError "Invalid s2i a
 env_variables="$(dockerRun 'env')"
 assertContains "$env_variables" "JAVA_HOME=/usr/local/openjdk-17$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=17.0.1$" \
+assertContains "$env_variables" "JAVA_VERSION=17.0.2$" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "JETTY_HOME=/usr/local/jetty$" \
   || reportError "JETTY_HOME invalid"
