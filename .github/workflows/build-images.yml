@@ -27,6 +27,6 @@ jobs:
           echo "Building quay.io/jkube/${{ matrix.image }}:${TAG}"
           cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="quay.io/jkube/${{ matrix.image }}:${TAG}"
       - name: Test
-        if: success() && startsWith(matrix.image, 'jkube-java')
+        if: success()
         run: |
           ./scripts/test-${{ matrix.image }}.sh

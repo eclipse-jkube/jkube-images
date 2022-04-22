@@ -9,7 +9,7 @@ IMAGE="quay.io/jkube/jkube-karaf:$TAG_OR_LATEST"
 
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
-assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.1"' || reportError "Invalid Java version"
+assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.2"' || reportError "Invalid Java version"
 
 # S2I scripts
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
