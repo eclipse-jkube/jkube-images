@@ -9,7 +9,8 @@ IMAGE="quay.io/jkube/jkube-tomcat:$TAG_OR_LATEST"
 
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
-assertContains "$(dockerRun 'java -version')" 'openjdk version "17.0.2"' || reportError "Invalid Java version"
+java_version="$(dockerRun 'java -version')"
+assertMatches "$java_version" 'openjdk version "17.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
 
 # S2I scripts
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
@@ -31,7 +32,7 @@ assertContains "$tomcatDir" "^webapps-javaee$" || reportError "webapps-javaee no
 env_variables="$(dockerRun 'env')"
 assertContains "$env_variables" "JAVA_HOME=/opt/java/openjdk$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=jdk-17.0.2+8$" \
+assertContains "$env_variables" "JAVA_VERSION=jdk-17.0.4+8$" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "CATALINA_HOME=/usr/local/tomcat$" \
   || reportError "CATALINA_HOME invalid"

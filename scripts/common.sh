@@ -17,6 +17,6 @@ function assertMatches() {
 }
 
 function reportError() {
-  >&2 echo "$1"
+  >&2 printf "$1"
   exit 1
 }
