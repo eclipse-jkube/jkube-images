@@ -25,7 +25,7 @@ assertContains "$assembleScript" 'copy_dir maven$' || reportError "Invalid s2i a
 env_variables="$(dockerRun 'env')"
 assertContains "$env_variables" "JAVA_HOME=/opt/java/openjdk$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=jdk-17.0.4+8$" \
+assertMatches "$env_variables" "JAVA_VERSION=jdk-17.0.+" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "JETTY_HOME=/usr/local/jetty$" \
   || reportError "JETTY_HOME invalid"
