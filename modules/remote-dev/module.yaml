@@ -1,0 +1,16 @@
+schema_version: 1
+version: 1.0.0
+name: remote-dev
+description: "Sets up the Open SSH server to be consumed by JKube's remote development service"
+envs:
+  - description: The user's public key to be added to the authorized_keys file
+    name: PUBLIC_KEY
+packages:
+  manager: apk
+  install:
+    - curl
+    - openssh-client
+    - openssh-server-pam
+    - openssh-sftp-server
+execute:
+  - script: configure

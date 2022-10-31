@@ -16,7 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ['jkube-java', 'jkube-java-11', 'jkube-jetty9', 'jkube-karaf', 'jkube-tomcat9', 'jkube-tomcat']
+        image: [
+          'jkube-java', 'jkube-java-11', 'jkube-jetty9', 'jkube-karaf', 'jkube-remote-dev', 'jkube-tomcat9', 'jkube-tomcat'
+        ]
     steps:
       - name: Checkout
         uses: actions/checkout@v3

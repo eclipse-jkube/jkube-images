@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+
+SCRIPT_DIR=$(dirname $0)
+ARTIFACTS_DIR=${SCRIPT_DIR}/artifacts
+
+echo "Copying artifacts"
+cp $ARTIFACTS_DIR/init.sh /init.sh
+chmod 755 /init.sh
+
+echo "Configuring OpenSSH"
+SSHD_CONFIG=/etc/ssh/sshd_config
+SSH_CONFIG_DIR=/opt/ssh-config
+chmod -R 775 /etc/ssh
+chmod -R 775 /run/
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g'                  $SSHD_CONFIG
+sed -i '/^AllowTcpForwarding/c\AllowTcpForwarding yes'                              $SSHD_CONFIG
+sed -i '/^GatewayPorts/c\GatewayPorts clientspecified'                              $SSHD_CONFIG
+sed -i "\,^AuthorizedKeysFile,c\AuthorizedKeysFile $SSH_CONFIG_DIR/authorized_keys" $SSHD_CONFIG
+echo "StrictModes no" >> $SSHD_CONFIG
+
+echo "Adding base image user (1000)"
+SSH_CONFIG_DIR=/opt/ssh-config
+adduser --disabled-password --uid 1000 "1000"
+addgroup "1000" "root"
+mkdir -p $SSH_CONFIG_DIR
+chmod 777 $SSH_CONFIG_DIR
+touch $SSH_CONFIG_DIR/authorized_keys
+chmod 666 $SSH_CONFIG_DIR/authorized_keys

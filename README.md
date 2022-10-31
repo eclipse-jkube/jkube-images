@@ -59,6 +59,12 @@ Available environment variables for runtime configuration:
 * **`AB_PROMETHEUS_OFF`** Disables the use of Prometheus Java Agent.
 * **`AB_PROMETHEUS_PORT`** Port to use for the Prometheus JMX Exporter.
 
+### jkube-remote-dev
+
+https://quay.io/repository/jkube/https://quay.io/repository/jkube/jkube-remote-dev
+
+Base image to be used by Eclipse JKube's remote development service.
+
 ### jkube-tomcat
 
 https://quay.io/repository/jkube/jkube-tomcat

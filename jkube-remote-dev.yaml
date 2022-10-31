@@ -1,0 +1,30 @@
+schema_version: 1
+
+name: "quay.io/jkube/jkube-remote-dev"
+description: "JKube's remote development image (SSH server)"
+version: "latest"
+from: "alpine:3.16"
+
+labels:
+  - name: "io.k8s.display-name"
+    value: "Eclipse JKube - Remote development"
+  - name: "io.k8s.description"
+    value: "Base image for JKube's remote development service"
+  - name: "io.openshift.tags"
+    value: "builder,jkube,remote-dev"
+  - name: "maintainer"
+    value: "Eclipse JKube Team <jkube-dev@eclipse.org>"
+
+modules:
+  repositories:
+    - path: modules
+  install:
+    - name: remote-dev
+
+ports:
+  - value: 2222
+
+run:
+  user: 1000
+  cmd:
+    - "/init.sh"
