@@ -32,7 +32,7 @@ assertContains "$tomcatDir" "^webapps-javaee$" || reportError "webapps-javaee no
 env_variables="$(dockerRun 'env')"
 assertContains "$env_variables" "JAVA_HOME=/opt/java/openjdk$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=jdk-17.0.4+8$" \
+assertMatches "$env_variables" "JAVA_VERSION=jdk-17.0.+" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "CATALINA_HOME=/usr/local/tomcat$" \
   || reportError "CATALINA_HOME invalid"

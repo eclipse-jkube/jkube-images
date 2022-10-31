@@ -25,11 +25,11 @@ assertContains "$assembleScript" 'copy_dir maven$' || reportError "Invalid s2i a
 env_variables="$(dockerRun 'env')"
 assertContains "$env_variables" "JAVA_HOME=/opt/java/openjdk$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=jdk-17.0.4+8$" \
+assertMatches "$env_variables" "JAVA_VERSION=jdk-17.0.+" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "CATALINA_HOME=/usr/local/tomcat$" \
   || reportError "CATALINA_HOME invalid"
-assertContains "$env_variables" "TOMCAT_VERSION=9.0.65$" \
+assertMatches "$env_variables" "TOMCAT_VERSION=9.0.+$" \
   || reportError "TOMCAT_VERSION invalid"
 assertContains "$env_variables" "DEPLOYMENTS_DIR=/deployments$" \
   || reportError "DEPLOYMENTS_DIR invalid"
