@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install CEKit
-        uses: cekit/actions-setup-cekit@v1.1.4
+        uses: cekit/actions-setup-cekit@v1.1.5
       - name: Get Tag
         id: get_version
         run: |
