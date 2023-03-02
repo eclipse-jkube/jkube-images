@@ -1,6 +1,6 @@
 # Eclipse JKube Images
 
-This repository contains some of the container images used by [Eclipse JKube](https://github.com/eclipse/jkube).
+This repository hosts part of the container images used by [Eclipse JKube](https://github.com/eclipse/jkube).
 
 These images are available on [Quay.io](https://quay.io/organization/jkube)
 
@@ -61,7 +61,7 @@ Available environment variables for runtime configuration:
 
 ### jkube-remote-dev
 
-https://quay.io/repository/jkube/https://quay.io/repository/jkube/jkube-remote-dev
+https://quay.io/repository/jkube/jkube-remote-dev
 
 Base image to be used by Eclipse JKube's remote development service.
 
