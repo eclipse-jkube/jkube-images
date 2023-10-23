@@ -12,6 +12,9 @@ assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || repo
 java_version="$(dockerRun 'java -version')"
 assertMatches "$java_version" 'openjdk version "11.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
 
+maven_version="$(dockerRun 'mvn -version')"
+assertMatches "$maven_version" 'Apache Maven 3.8.[0-9]+' || reportError "Invalid Maven version:\n\n$maven_version"
+
 # run-java dependent scripts
 jvm_tools="$(dockerRun 'ls -la /opt/jboss/container/java/jvm/')"
 assertContains "$jvm_tools" "container-limits$" || reportError "container-limits not found"
