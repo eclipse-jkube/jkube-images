@@ -72,3 +72,6 @@ assertContains "$env_variables" "GC_CONTAINER_OPTIONS= $" \
 # Additional tools
 netstat_version="$(dockerRun 'netstat --version')"
 assertMatches "$netstat_version" 'net-tools 2.[0-9]+' || reportError "Invalid netstat (net-tools) version:\n\n$netstat_version"
+
+ps_version="$(dockerRun 'ps --version')"
+assertMatches "$ps_version" 'ps from procps-ng 3.3.[0-9]+' || reportError "Invalid ps (procps-ng) version:\n\n$ps_version"

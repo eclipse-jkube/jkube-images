@@ -7,5 +7,6 @@ packages:
   manager: dnf
   install:
     - net-tools
+    - procps-ng
 
 execute: []
