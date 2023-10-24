@@ -19,7 +19,7 @@ modules:
   repositories:
     - path: modules
   install:
-    - name: remote-dev
+    - name: org.eclipse.jkube.remote-dev
 
 ports:
   - value: 2222
