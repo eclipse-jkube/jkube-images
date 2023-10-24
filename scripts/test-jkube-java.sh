@@ -68,3 +68,7 @@ assertContains "$env_variables" "AB_PROMETHEUS_JMX_EXPORTER_CONFIG=/opt/jboss/co
   || reportError "AB_PROMETHEUS_JMX_EXPORTER_CONFIG invalid"
 assertContains "$env_variables" "GC_CONTAINER_OPTIONS= $" \
   || reportError "GC_CONTAINER_OPTIONS invalid"
+
+# Additional tools
+netstat_version="$(dockerRun 'netstat --version')"
+assertMatches "$netstat_version" 'net-tools 2.[0-9]+' || reportError "Invalid netstat (net-tools) version:\n\n$netstat_version"

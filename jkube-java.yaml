@@ -38,6 +38,8 @@ modules:
         url: https://github.com/jboss-openshift/cct_module.git
         ref: 0.45.4
   install:
+    - name: org.eclipse.jkube.debug
+      version: 1.0.0
     - name: jboss.container.microdnf-bz-workaround
     - name: jboss.container.openjdk.jdk
       version: "17"
