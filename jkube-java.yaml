@@ -55,7 +55,7 @@ modules:
     - name: jboss.container.util.logging.bash
     - name: jboss.container.java.jvm.bash.debug-options-override
     - name: jboss.container.prometheus-override
-    - name: jolokia-download
+    - name: org.eclipse.jkube.jolokia
       # Removes any other Java JDK that might have been downloaded by other packages (run last)
     - name: org.eclipse.jkube.jvm.singleton-jdk
 
