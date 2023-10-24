@@ -1,0 +1,8 @@
+# Port of jboss.container.java.singleton-jdk
+schema_version: 1
+version: 1.0.0
+name: org.eclipse.jkube.jvm.singleton-jdk
+description: Ensures only a single JDK version is installed
+
+execute:
+  - script: configure.sh
