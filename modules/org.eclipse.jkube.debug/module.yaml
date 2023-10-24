@@ -1,0 +1,11 @@
+schema_version: 1
+name: org.eclipse.jkube.debug
+version: 1.0.0
+description: Adds command-line debugging tools to the image.
+
+packages:
+  manager: dnf
+  install:
+    - net-tools
+
+execute: []
