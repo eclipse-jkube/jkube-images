@@ -3,11 +3,11 @@ schema_version: 1
 name: "quay.io/jkube/jkube-java-11"
 description: "Platform for building and running plain Java 11 applications (fat-jar and flat classpath)"
 version: "latest"
-from: "registry.access.redhat.com/ubi8/ubi-minimal:8.8"
+from: "registry.access.redhat.com/ubi9/ubi-minimal:9.3"
 
 labels:
   - name: "io.k8s.display-name"
-    value: "Eclipse JKube - Java 11 S2I (UBI8)"
+    value: "Eclipse JKube - Java 11 S2I (UBI9)"
   - name: "io.k8s.description"
     value: "Platform for building and running plain Java 11 applications (fat-jar and flat classpath)"
   - name: "io.openshift.tags"
@@ -42,16 +42,15 @@ modules:
       version: "11"
     - name: jboss.container.maven
       version: 8.2.3.8
-    - name: jboss.container.prometheus
     - name: jboss.container.dnf
     - name: jboss.container.java.s2i.bash
     - name: jboss.container.java.run.bash
     - name: jboss.container.jolokia
+      version: jkube-1.7.2
     - name: jboss.container.prometheus
+      version: jkube-0.20.0
     - name: jboss.container.util.logging.bash
     - name: jboss.container.java.jvm.bash.debug-options-override
-    - name: jboss.container.prometheus-override
-    - name: org.eclipse.jkube.jolokia
       # Removes any other Java JDK that might have been downloaded by other packages (run last)
     - name: org.eclipse.jkube.jvm.singleton-jdk
 

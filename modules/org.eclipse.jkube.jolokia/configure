@@ -1,5 +1,0 @@
-#!/bin/sh
-set -e
-
-mkdir -p /usr/share/java/jolokia-jvm-agent/
-cp /tmp/artifacts/jolokia-jvm.jar /usr/share/java/jolokia-jvm-agent/
