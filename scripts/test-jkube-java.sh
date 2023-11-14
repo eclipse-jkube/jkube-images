@@ -36,6 +36,20 @@ run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
 assertContains "$run_java" "run-env.sh" || reportError "run-env.sh not found"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 
+# Jolokia module
+jolokia_jar="$(dockerRun 'ls -la /usr/share/java/jolokia-jvm-agent/')"
+assertContains "$jolokia_jar" "jolokia-jvm.jar" || reportError "jolokia-jvm.jar not found"
+jolokia="$(dockerRun 'ls -la /opt/jboss/container/jolokia/')"
+assertContains "$jolokia" "jolokia-opts" || reportError "jolokia-opts not found"
+assertContains "$jolokia" "etc" || reportError "etc not found"
+
+# Prometheus module
+prometheus_jar="$(dockerRun 'ls -la /usr/share/java/prometheus-jmx-exporter/')"
+assertContains "$prometheus_jar" "jmx_prometheus_javaagent.jar" || reportError "jmx_prometheus_javaagent.jar not found"
+prometheus="$(dockerRun 'ls -la /opt/jboss/container/prometheus/')"
+assertContains "$prometheus" "prometheus-opts" || reportError "prometheus-opts not found"
+assertContains "$prometheus" "etc" || reportError "etc not found"
+
 # S2I scripts
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
 assertContains "$s2i" "assemble" || reportError "assemble not found"
