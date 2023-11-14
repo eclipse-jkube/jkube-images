@@ -11,8 +11,8 @@ These images are available on [Quay.io](https://quay.io/organization/jkube)
 https://quay.io/repository/jkube/jkube-java
 
 Base image to be used by any `JavaExecGenerator` implementation. The image is based on
-[ubi8/openjdk-11](https://github.com/jboss-container-images/openjdk/blob/d5ed2f4e811861ab921a33004da37de13f67f0ba/ubi8-openjdk-11.yaml#L6)
-([catalog.redhat.com](https://catalog.redhat.com/software/containers/detail/5dd6a4b45a13461646f677f4?container-tabs=overview))
+`ubi9/ubi-minimal`
+([catalog.redhat.com](https://catalog.redhat.com/software/containers/ubi9/ubi-minimal/615bd9b4075b022acc111bf5))
 with stripped down dependencies to make it lighter.
 
 The image contains the `run-java.sh` script added by
