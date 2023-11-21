@@ -5,12 +5,12 @@ trap 'exit' ERR
 BASEDIR=$(dirname "$BASH_SOURCE")
 source "$BASEDIR/common.sh"
 
-IMAGE="quay.io/jkube/jkube-java:$TAG_OR_LATEST"
+IMAGE="quay.io/jkube/jkube-java-17:$TAG_OR_LATEST"
 
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
 java_version="$(dockerRun 'java -version')"
-assertMatches "$java_version" 'openjdk version "21.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
+assertMatches "$java_version" 'openjdk version "17.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
 
 maven_version="$(dockerRun 'mvn -version')"
 assertMatches "$maven_version" 'Apache Maven 3.8.[0-9]+' || reportError "Invalid Maven version:\n\n$maven_version"
@@ -58,9 +58,9 @@ assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' |
 
 # Env
 env_variables="$(dockerRun 'env')"
-assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-21$" \
+assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-17$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=21$" \
+assertContains "$env_variables" "JAVA_VERSION=17$" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "DEPLOYMENTS_DIR=/deployments$" \
   || reportError "DEPLOYMENTS_DIR invalid"

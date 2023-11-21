@@ -1,15 +1,15 @@
 schema_version: 1
 
-name: "quay.io/jkube/jkube-java"
-description: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
+name: "quay.io/jkube/jkube-java-17"
+description: "Platform for building and running plain Java 17 applications (fat-jar and flat classpath)"
 version: "latest"
 from: "registry.access.redhat.com/ubi9/ubi-minimal:9.3"
 
 labels:
   - name: "io.k8s.display-name"
-    value: "Eclipse JKube - Java (UBI9)"
+    value: "Eclipse JKube - Java 17 (UBI9)"
   - name: "io.k8s.description"
-    value: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
+    value: "Platform for building and running plain Java 17 applications (fat-jar and flat classpath)"
   - name: "io.openshift.tags"
     value: "builder,jkube,java"
   - name: "io.openshift.s2i.scripts-url"
@@ -43,7 +43,7 @@ modules:
       version: 1.0.0
     - name: jboss.container.microdnf-bz-workaround
     - name: jboss.container.openjdk.jdk
-      version: "21"
+      version: "17"
     - name: jboss.container.maven
       version: 8.2.3.8
     - name: jboss.container.dnf
