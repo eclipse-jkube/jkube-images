@@ -3,19 +3,19 @@
 schema_version: 1
 
 name: jboss.container.jolokia
-version: 'jkube-1.7.2'
+version: 'jkube-2.0.0'
 description: ^
   Provides support for configuring Jolokia.  Basic usage is
   opts="$JBOSS_CONTAINER_JOLOKIA_MODULE/jolokia-opts"
 
 labels:
   - name: io.fabric8.s2i.version.jolokia
-    value: "1.7.2"
+    value: "2.0.0"
 
 envs:
   - name: JOLOKIA_VERSION
     description: Version of Jolokia being used.
-    value: "1.7.2"
+    value: "2.0.0"
   - name: AB_JOLOKIA_PASSWORD_RANDOM
     description: Determines if a random AB_JOLOKIA_PASSWORD be generated. Set to **true** to generate random password. Generated value will be written to `/opt/jolokia/etc/jolokia.pw`.
     value: "true"
@@ -61,8 +61,8 @@ ports:
 artifacts:
   - name: jolokia-jvm.jar
     target: jolokia-jvm.jar
-    url: https://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.7.2/jolokia-jvm-1.7.2.jar
-    md5: d489d62d1143e6a2e85a869a4b824a67
+    url: https://repo1.maven.org/maven2/org/jolokia/jolokia-agent-jvm/2.0.0/jolokia-agent-jvm-2.0.0-javaagent.jar
+    md5: 6f4d49d8f2e389878a2b698ee2ad586b
 
 execute:
   - script: configure.sh
