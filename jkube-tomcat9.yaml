@@ -3,7 +3,7 @@ schema_version: 1
 name: "quay.io/jkube/jkube-tomcat9"
 description: "Base image for Apache Tomcat 9 webapp deployments"
 version: "latest"
-from: "tomcat:9.0.82-jdk21-temurin"
+from: "tomcat:9.0.84-jdk21-temurin"
 
 labels:
   - name: "io.k8s.display-name"
