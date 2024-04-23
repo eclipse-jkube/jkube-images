@@ -1,6 +1,6 @@
 # Eclipse JKube Images
 
-This repository hosts part of the container images used by [Eclipse JKube](https://github.com/eclipse/jkube).
+This repository hosts part of the container images used by [Eclipse JKube](https://github.com/eclipse-jkube/jkube).
 
 These images are available on [Quay.io](https://quay.io/organization/jkube)
 
