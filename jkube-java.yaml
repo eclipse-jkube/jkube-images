@@ -3,7 +3,7 @@ schema_version: 1
 name: "quay.io/jkube/jkube-java"
 description: "Platform for building and running plain Java applications (fat-jar and flat classpath)"
 version: "latest"
-from: "registry.access.redhat.com/ubi9/ubi-minimal:9.3"
+from: "registry.access.redhat.com/ubi9/ubi-minimal:9.4"
 
 labels:
   - name: "io.k8s.display-name"
