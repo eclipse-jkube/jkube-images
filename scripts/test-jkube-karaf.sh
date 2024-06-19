@@ -10,7 +10,7 @@ IMAGE="quay.io/jkube/jkube-karaf:$TAG_OR_LATEST"
 assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
 
 java_version="$(dockerRun 'java -version')"
-assertMatches "$java_version" 'openjdk version "17.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
+assertMatches "$java_version" 'openjdk version "21.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
 
 # S2I scripts
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
@@ -25,9 +25,9 @@ assertContains "$(dockerRun 'cat /usr/local/s2i/run')" 'exec "$KARAF_HOME/bin/ka
 
 # Env
 env_variables="$(dockerRun 'env')"
-assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-17$" \
+assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-21$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=17$" \
+assertContains "$env_variables" "JAVA_VERSION=21$" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "KARAF_HOME=/deployments/karaf$" \
   || reportError "KARAF_HOME invalid"
