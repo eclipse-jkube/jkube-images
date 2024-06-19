@@ -8,9 +8,9 @@ These images are available on [Quay.io](https://quay.io/organization/jkube)
 
 ### jkube-java
 
-https://quay.io/repository/jkube/jkube-java
-https://quay.io/repository/jkube/jkube-java-17
-https://quay.io/repository/jkube/jkube-java-11
+- https://quay.io/repository/jkube/jkube-java
+- https://quay.io/repository/jkube/jkube-java-17
+- https://quay.io/repository/jkube/jkube-java-11
 
 Base image to be used by any `JavaExecGenerator` implementation. The image is based on
 `ubi9/ubi-minimal`
