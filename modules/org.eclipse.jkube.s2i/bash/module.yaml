@@ -1,0 +1,30 @@
+schema_version: 1
+name: org.eclipse.jkube.s2i.bash
+version: 1.0.0
+description: >
+  Customization of common Maven S2I for Java S2I image.
+
+  Adapted from:
+  - https://github.com/jboss-container-images/openjdk/blob/d14ec7f363956b73684409c8b6bd9c766507013b/modules/s2i/bash/
+  - https://github.com/jboss-openshift/cct_module/tree/f91fb2f80dd880ed7498d4dfc3afb35dfcef60bd/jboss/container/java/s2i/bash
+
+envs:
+  - name: JBOSS_CONTAINER_JAVA_S2I_MODULE
+    value: /opt/jboss/container/java/s2i
+  - name: S2I_SOURCE_DEPLOYMENTS_FILTER
+    value: "*.jar"
+
+execute:
+  - script: configure.sh
+
+modules:
+  install:
+    - name: org.eclipse.jkube.user
+    - name: org.eclipse.jkube.maven.s2i
+    - name: org.eclipse.jkube.run.bash
+    - name: org.eclipse.jkube.prometheus
+    - name: jboss.container.util.logging.bash
+
+packages:
+  install:
+    - rsync
