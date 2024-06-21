@@ -1,0 +1,62 @@
+schema_version: 1
+name: org.eclipse.jkube.jvm.bash
+version: 1.0.0
+description: >
+  Provides support for configuring Java JVM, e.g. GC settings, etc.  Basic usage
+  is opts=$($JBOSS_CONTAINER_JAVA_JVM_MODULE/java-default-options).
+  
+  Adapted from:
+  - https://github.com/jboss-container-images/openjdk/blob/d14ec7f363956b73684409c8b6bd9c766507013b/modules/jvm/
+  - https://github.com/jboss-openshift/cct_module/blob/f91fb2f80dd880ed7498d4dfc3afb35dfcef60bd/jboss/container/java/jvm/bash/
+
+execute:
+  - script: configure.sh
+
+modules:
+  install:
+    - name: org.eclipse.jkube.user
+    - name: jboss.container.java.proxy.bash
+
+envs:
+  - name:         JBOSS_CONTAINER_JAVA_JVM_MODULE
+    value:        /opt/jboss/container/java/jvm
+  - name:         JAVA_OPTS
+    description:  JVM options passed to the `java` command.
+    example:      "-verbose:class"
+  - name:         JAVA_OPTS_APPEND
+    description:  User specified Java options to be appended to the generated options.
+      This variable has no effect if `JAVA_OPTS` has been defined.
+    example:      "-Dsome.property=foo"
+  - name: JAVA_MAX_MEM_RATIO
+    description:  Specify the maximum heap memory. Corresponds to the JVM argument `-XX:MaxRAMPercentage`. The default is `80.0` which means 80% of the available memory. You can disable this mechanism by setting the value to `0`. The supplied value can be an integer or float, but only the whole number part is used.
+    example: "90.0"
+  - name:         JAVA_DIAGNOSTICS
+    description:  "Set this to get some diagnostics information to standard output when things are happening. **Note: ** This option, if set to true, will set `-XX :+UnlockDiagnosticVMOptions`. **Disabled by default.**"
+    example:      "true"
+  - name:         JAVA_DEBUG
+    description:  If set remote debugging will be switched on. **Disabled by default.**
+    example:      "true"
+  - name:         JAVA_DEBUG_PORT
+    description:  Port used for remote debugging. Defaults to *5005*.
+    example:      "8787"
+  - name:         GC_MIN_HEAP_FREE_RATIO
+    description:  Minimum percentage of heap free after GC to avoid expansion.
+    example:      "20"
+  - name:         GC_MAX_HEAP_FREE_RATIO
+    description:  Maximum percentage of heap free after GC to avoid shrinking.
+    example:      "40"
+  - name:         GC_TIME_RATIO
+    description:  Specifies the ratio of the time spent outside the garbage collection (for example, the time spent for application execution) to the time spent in the garbage collection.
+    example:      "4"
+  - name:         GC_ADAPTIVE_SIZE_POLICY_WEIGHT
+    description:  The weighting given to the current GC time versus previous GC times.
+    example:      "90"
+  - name:         GC_METASPACE_SIZE
+    description:  The initial metaspace size.
+    example:      "20"
+  - name:         GC_MAX_METASPACE_SIZE
+    description:  The maximum metaspace size.
+    example:      "100"
+  - name:         GC_CONTAINER_OPTIONS
+    description:  specify Java GC to use. The value of this variable should contain the necessary JRE command-line options to specify the required GC, which will override the default of `-:+UseParallelGC`.
+    example:      -XX:+UseG1GC
