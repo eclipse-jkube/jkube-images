@@ -1,0 +1,30 @@
+# Ported from https://github.com/jboss-openshift/cct_module/tree/8411125f8e1b45d48c93c8bcd51d39541ce4a755/jboss/container/prometheus/8.2
+# Uses Maven Central Artifact instead of RPM package because there's no package (yet) for RHEL 9
+schema_version: 1
+
+name: org.eclipse.jkube.prometheus
+version: '0.20.0'
+description: ^
+  Provides support for configuring Prometheus.  Basic usage is
+  JAVA_OPTS="$JAVA_OPTS $(source $JBOSS_CONTAINER_PROMETHEUS_MODULE/prometheus-opts; get_prometheus_opts)"
+
+envs:
+  - name: JBOSS_CONTAINER_PROMETHEUS_MODULE
+    value: /opt/jboss/container/prometheus
+  - name: AB_PROMETHEUS_OFF
+    description: Disable the use of prometheus agent
+    example: true
+  - name: AB_PROMETHEUS_PORT
+    description: Port to use for the Prometheus JMX Exporter.
+    example: 9799
+  - name: AB_PROMETHEUS_JMX_EXPORTER_CONFIG
+    value: /opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml
+    description: Path to configuration to use for the Prometheus JMX Exporter
+
+artifacts:
+  - name: jmx_prometheus_javaagent.jar
+    target: jmx_prometheus_javaagent.jar
+    url: https://search.maven.org/remotecontent?filepath=io/prometheus/jmx/jmx_prometheus_javaagent/0.20.0/jmx_prometheus_javaagent-0.20.0.jar
+    md5: ea10089dd3c0224391bd9bf01d3e1154
+execute:
+  - script: configure.sh
