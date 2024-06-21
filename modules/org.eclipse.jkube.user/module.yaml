@@ -1,0 +1,30 @@
+schema_version: 1
+name: org.eclipse.jkube.user
+version: 1.0.0
+description: >
+  Configures the default user and permissions.  This module should be included by all images.
+  
+  Adapted from:
+  - https://github.com/jboss-container-images/openjdk/blob/d14ec7f363956b73684409c8b6bd9c766507013b/modules/user/
+  - https://github.com/jboss-openshift/cct_module/blob/f91fb2f80dd880ed7498d4dfc3afb35dfcef60bd/jboss/container/user/
+
+envs:
+  - name: "USER"
+    value: "jboss"
+  - name: "UID"
+    value: &uid 185
+  - name: "HOME"
+    value: "/home/jboss"
+  - name: "GECOS"
+    value: "JBoss user"
+
+packages:
+  install:
+    - shadow-utils # groupadd
+
+execute:
+  - script: configure.sh
+
+run:
+  user: *uid
+  workdir: "/home/jboss"
