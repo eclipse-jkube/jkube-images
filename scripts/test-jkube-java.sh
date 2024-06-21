@@ -29,20 +29,19 @@ assertMatches "$maven_version" 'Apache Maven 3.8.[0-9]+' || reportError "Invalid
 
 # run-java dependent scripts (xxx.java.jvm.bash)
 jvm_tools="$(dockerRun 'ls -la /opt/jboss/container/java/jvm/')"
-assertContains "$jvm_tools" "container-limits$" || reportError "container-limits not found"
 assertContains "$jvm_tools" "debug-options$" || reportError "debug-options not found"
 assertContains "$jvm_tools" "java-default-options$" || reportError "java-default-options not found"
 # java-default-options default
 java_default_options="$(dockerRunE '/opt/jboss/container/java/jvm/java-default-options')" || reportError "Failed to get java_default_options"
-assertMatches "$java_default_options" '^-XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError$' \
+assertMatches "$java_default_options" '^-XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError$' \
   || reportError "Invalid java_default_options:\n\n$java_default_options"
 # java-default-options override with JAVA_DIAGNOSTICS
 java_default_options="$(dockerRunE /bin/bash -c 'JAVA_DIAGNOSTICS=true /opt/jboss/container/java/jvm/java-default-options')"|| reportError "Failed to get java_default_options"
-assertMatches "$java_default_options" '^-XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xlog:gc::utctime -XX:NativeMemoryTracking=summary -XX:\+ExitOnOutOfMemoryError$' \
+assertMatches "$java_default_options" '^-XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xlog:gc::utctime -XX:NativeMemoryTracking=summary -XX:\+ExitOnOutOfMemoryError$' \
   || reportError "Invalid java_default_options (JAVA_DIAGNOSTICS):\n\n$java_default_options"
 # java-default-options override with blank GC_CONTAINER_OPTIONS env (Unsupported -XX:+UseParallelOldGC is listed)
 java_default_options="$(dockerRunE /bin/bash -c 'GC_CONTAINER_OPTIONS="" /opt/jboss/container/java/jvm/java-default-options')"|| reportError "Failed to get java_default_options"
-assertMatches "$java_default_options" "^-XX:\+UseParallelOldGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError$" \
+assertMatches "$java_default_options" "^-XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError$" \
   || reportError "Invalid java_default_options (GC_CONTAINER_OPTIONS):\n\n$java_default_options"
 
 # debug-options-override
@@ -52,11 +51,10 @@ assertContains "$debug_options" "[-]agentlib:jdwp=transport=dt_socket,server=y,s
 
 # Default run-java module (xxx.java.run.bash)
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
-assertContains "$run_java" "run-env.sh" || reportError "run-env.sh not found"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 # shellcheck disable=SC2016
 run_java_exec="$(dockerRunE /bin/bash -c 'JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /opt/jboss/container/java/run/run-java.sh')" || reportError "Failed to get run_java_exec"
-assertMatches "$run_java_exec" ".+java -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar.+" \
+assertMatches "$run_java_exec" ".+java -XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar.+" \
   || reportError "Invalid run_java_exec:\n\n$run_java_exec"
 
 # Jolokia module
@@ -82,9 +80,9 @@ assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' |
 s2i_run="$(dockerRunE /bin/bash -c 'JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /usr/local/s2i/run')" || reportError "Failed to get s2i_run"
 assertJolokia="-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties"
 assertPrometheus="-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=9779:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml"
-assertJavaExec="-XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar"
+assertJavaExec="-XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar"
 assertMatches "$s2i_run" ".+java $assertJolokia $assertPrometheus $assertJavaExec.+" \
-  || reportError "Invalid run_java_exec:\n\n$s2i_run"
+  || reportError "Invalid s2i_run:\n\n$s2i_run"
 
 # Generic environment variables
 assertContains "$env_variables" "DEPLOYMENTS_DIR=/deployments$" \
