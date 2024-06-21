@@ -1,0 +1,89 @@
+#!/bin/sh
+# =================================================================
+# Detect whether running in a container and set appropriate options
+# for limiting Java VM resources
+#
+# Usage: JAVA_OPTS="$(java-default-options.sh)"
+
+# stubs for jvm specific overrides
+jvm_specific_options() {
+  :
+}
+
+jvm_specific_diagnostics() {
+  :
+}
+
+# Include overridden jvm_specific_*() functions
+if [ -f "${JBOSS_CONTAINER_OPENJDK_JDK_MODULE}/jvm-options" ]; then
+  source "${JBOSS_CONTAINER_OPENJDK_JDK_MODULE}/jvm-options"
+fi
+
+# Check for memory options and calculate a sane default if not given
+max_memory() {
+  case "$JAVA_MAX_MEM_RATIO" in
+    "0") # explicitly disabled
+      return
+      ;;
+    "")
+      maxmem="80.0"
+      ;;
+    *)
+      maxmem="$(printf "%.0f.0" "$JAVA_MAX_MEM_RATIO")"
+      ;;
+  esac
+  echo "-XX:MaxRAMPercentage=$maxmem"
+}
+
+# Switch on diagnostics except when switched off
+diagnostics() {
+  if [ "x$JAVA_DIAGNOSTICS" != "x" ]; then
+    echo "$(jvm_specific_diagnostics)"
+  fi
+}
+
+gc_config() {
+  local minHeapFreeRatio=${GC_MIN_HEAP_FREE_RATIO:-10}
+  local maxHeapFreeRatio=${GC_MAX_HEAP_FREE_RATIO:-20}
+  local timeRatio=${GC_TIME_RATIO:-4}
+  local adaptiveSizePolicyWeight=${GC_ADAPTIVE_SIZE_POLICY_WEIGHT:-90}
+  local gcOptions="${GC_CONTAINER_OPTIONS:--XX:+UseParallelGC}"
+
+  # for compat reasons we don't set a default value for metaspaceSize
+  local metaspaceSize
+  # We also don't set a default value for maxMetaspaceSize
+  local maxMetaspaceSize=${GC_MAX_METASPACE_SIZE}
+
+  if [ -n "${GC_METASPACE_SIZE}" ]; then
+    metaspaceSize=${GC_METASPACE_SIZE}
+    if [ -n "${maxMetaspaceSize}" ]; then
+      # clamp the max size of metaspaceSize to be <= maxMetaspaceSize
+      if [ "${metaspaceSize}" -gt "${maxMetaspaceSize}" ]; then
+        metaspaceSize=${maxMetaspaceSize}
+      fi
+    fi
+  fi
+
+  local allOptions="$(jvm_specific_options) "
+  allOptions+="${gcOptions} "
+  allOptions+="-XX:MinHeapFreeRatio=${minHeapFreeRatio} "
+  allOptions+="-XX:MaxHeapFreeRatio=${maxHeapFreeRatio} "
+  allOptions+="-XX:GCTimeRatio=${timeRatio} "
+  allOptions+="-XX:AdaptiveSizePolicyWeight=${adaptiveSizePolicyWeight} "
+  # if no value was specified for maxMetaSpaceSize we should skip passing it entirely
+  if [ -n "${maxMetaspaceSize}" ]; then
+    allOptions+="-XX:MaxMetaspaceSize=${maxMetaspaceSize}m "
+  fi
+  if [ -n "${metaspaceSize}" ]; then
+    allOptions+="-XX:MetaspaceSize=${metaspaceSize}m "
+  fi
+
+  echo "${allOptions}"
+}
+
+error_handling() {
+  echo "-XX:+ExitOnOutOfMemoryError"
+}
+
+## Echo options, trimming trailing and multiple spaces
+echo "$(max_memory) $(gc_config) $(diagnostics) $(error_handling)" | awk '$1=$1'
