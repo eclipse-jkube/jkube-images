@@ -12,9 +12,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [
-          'jkube-java', 'jkube-java-17', 'jkube-java-11', 'jkube-jetty9', 'jkube-karaf', 'jkube-remote-dev', 'jkube-tomcat9', 'jkube-tomcat'
-        ]
+        image:
+          - name: 'jkube-java'
+            args: ''
+          - name: 'jkube-java-17'
+            args: ''
+          - name: 'jkube-java-11'
+            args: ''
+          - name: 'jkube-jetty9'
+            args: ''
+          - name: 'jkube-karaf'
+            args: ''
+          - name: 'jkube-remote-dev'
+            args: ''
+          - name: 'jkube-tomcat9'
+            args: ''
+          - name: 'jkube-tomcat'
+            args: --no-squash
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -24,12 +38,12 @@ jobs:
         id: get_version
         run: |
           export GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
-          echo "TAG=quay.io/jkube/${{ matrix.image }}:${GITHUB_TAG/v/}" >> $GITHUB_ENV
-      - name: Build ${{ matrix.image }}
+          echo "TAG=quay.io/jkube/${{ matrix.image.name }}:${GITHUB_TAG/v/}" >> $GITHUB_ENV
+      - name: Build ${{ matrix.image.name }}
         run: |
           echo "Building ${TAG}"
-          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="${TAG}"
-      - name: Push quay.io/jkube/${{ matrix.image }}
+          cekit --descriptor ${{ matrix.image.name }}.yaml build docker ${{ matrix.image.args }} --tag="${TAG}"
+      - name: Push quay.io/jkube/${{ matrix.image.name }}
         run: |
           echo "Pushing ${TAG}"
           docker login -u=${{ secrets.QUAY_USER }} -p=${{ secrets.QUAY_TOKEN }} quay.io
