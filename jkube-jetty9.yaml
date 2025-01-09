@@ -3,7 +3,7 @@ schema_version: 1
 name: "quay.io/jkube/jkube-jetty9"
 description: "Base image for Jetty 9 webapp deployments"
 version: "latest"
-from: "jetty:9.4.54-jre21-alpine-eclipse-temurin"
+from: "jetty:9.4.56-jre21-alpine-eclipse-temurin"
 
 labels:
   - name: "io.k8s.display-name"
