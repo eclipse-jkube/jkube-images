@@ -30,7 +30,7 @@ jobs:
           - name: 'jkube-remote-dev'
             args: ''
           - name: 'jkube-tomcat9'
-            args: ''
+            args: --no-squash
           - name: 'jkube-tomcat'
             args: --no-squash
     steps:

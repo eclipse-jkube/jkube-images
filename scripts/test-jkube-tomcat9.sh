@@ -7,7 +7,7 @@ source "$BASEDIR/common.sh"
 
 IMAGE="quay.io/jkube/jkube-tomcat9:$TAG_OR_LATEST"
 
-assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
+assertContains "$(dockerRun 'id')" "uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu)" || reportError "Invalid run user, should be 1000"
 
 java_version="$(dockerRun 'java -version')"
 assertMatches "$java_version" 'openjdk version "21.[0-9]+.[0-9]+".*' || reportError "Invalid Java version:\n\n$java_version"
