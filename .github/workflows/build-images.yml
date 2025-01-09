@@ -16,19 +16,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [
-          'jkube-java', 'jkube-java-17', 'jkube-java-11', 'jkube-jetty9', 'jkube-karaf', 'jkube-remote-dev', 'jkube-tomcat9', 'jkube-tomcat'
-        ]
+        image:
+          - name: 'jkube-java'
+            args: ''
+          - name: 'jkube-java-17'
+            args: ''
+          - name: 'jkube-java-11'
+            args: ''
+          - name: 'jkube-jetty9'
+            args: ''
+          - name: 'jkube-karaf'
+            args: ''
+          - name: 'jkube-remote-dev'
+            args: ''
+          - name: 'jkube-tomcat9'
+            args: ''
+          - name: 'jkube-tomcat'
+            args: --no-squash
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install CEKit
         uses: cekit/actions-setup-cekit@v1.1.7
-      - name: Build ${{ matrix.image }}
+      - name: Build ${{ matrix.image.name }}
         run: |
-          echo "Building quay.io/jkube/${{ matrix.image }}:${TAG}"
-          cekit --descriptor ${{ matrix.image }}.yaml build docker --tag="quay.io/jkube/${{ matrix.image }}:${TAG}"
+          echo "Building quay.io/jkube/${{ matrix.image.name }}:${TAG}"
+          cekit --descriptor ${{ matrix.image.name }}.yaml build docker ${{ matrix.image.args }} --tag="quay.io/jkube/${{ matrix.image.name }}:${TAG}"
       - name: Test
         if: success()
         run: |
-          ./scripts/test-${{ matrix.image }}.sh
+          ./scripts/test-${{ matrix.image.name }}.sh
