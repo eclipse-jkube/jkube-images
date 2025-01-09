@@ -3,7 +3,7 @@ schema_version: 1
 name: "quay.io/jkube/jkube-java-17"
 description: "Platform for building and running plain Java 17 applications (fat-jar and flat classpath)"
 version: "latest"
-from: "registry.access.redhat.com/ubi9/ubi-minimal:9.4"
+from: "registry.access.redhat.com/ubi9/ubi-minimal:9.5"
 
 labels:
   - name: "io.k8s.display-name"
@@ -37,7 +37,7 @@ modules:
     - name: cct_module
       git:
         url: https://github.com/jboss-openshift/cct_module.git
-        ref: 0.45.4
+        ref: 0.45.5
   install:
     - name: org.eclipse.jkube.debug
       version: 1.0.0
