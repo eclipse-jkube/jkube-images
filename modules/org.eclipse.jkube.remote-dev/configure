@@ -21,7 +21,8 @@ echo "StrictModes no" >> $SSHD_CONFIG
 
 echo "Adding base image user (1000)"
 SSH_CONFIG_DIR=/opt/ssh-config
-adduser --disabled-password --uid 1000 "1000"
+adduser --disabled-password --gecos "" --uid 1000 "1000"
+usermod -p '*' 1000 # unlock user https://unix.stackexchange.com/questions/193066/how-to-unlock-account-for-public-key-ssh-authorization-but-not-for-password-aut
 addgroup "1000" "root"
 mkdir -p $SSH_CONFIG_DIR
 chmod 777 $SSH_CONFIG_DIR
