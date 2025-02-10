@@ -12,5 +12,6 @@ packages:
     - openssh-client
     - openssh-server-pam
     - openssh-sftp-server
+    - shadow
 execute:
   - script: configure
