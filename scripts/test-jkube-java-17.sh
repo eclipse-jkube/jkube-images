@@ -65,6 +65,18 @@ assertContains "$jolokia_jar" "jolokia-jvm.jar" || reportError "jolokia-jvm.jar 
 jolokia="$(dockerRun 'ls -la /opt/jboss/container/jolokia/')"
 assertContains "$jolokia" "jolokia-opts" || reportError "jolokia-opts not found"
 assertContains "$jolokia" "etc" || reportError "etc not found"
+# Verify jolokia-opts is executable
+assertMatches "$jolokia" 'rwx.*jolokia-opts' || reportError "jolokia-opts is not executable"
+# Verify jolokia-opts produces the expected javaagent string
+jolokia_opts_output="$(dockerRunE /bin/bash -c '. /opt/jboss/container/jolokia/jolokia-opts')" || reportError "Failed to run jolokia-opts"
+assertContains "$jolokia_opts_output" "-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties" \
+  || reportError "jolokia-opts output invalid:\n\n$jolokia_opts_output"
+# Verify jolokia-opts respects AB_JOLOKIA_OFF
+jolokia_off_output="$(dockerRunE /bin/bash -c 'AB_JOLOKIA_OFF=true . /opt/jboss/container/jolokia/jolokia-opts')" || true
+assertMatches "$jolokia_off_output" '^$' || reportError "jolokia-opts should produce no output when AB_JOLOKIA_OFF is set:\n\n$jolokia_off_output"
+# Verify JBOSS_CONTAINER_JOLOKIA_MODULE env var
+assertContains "$env_variables" "JBOSS_CONTAINER_JOLOKIA_MODULE=/opt/jboss/container/jolokia$" \
+  || reportError "JBOSS_CONTAINER_JOLOKIA_MODULE invalid"
 
 # Prometheus module
 prometheus_jar="$(dockerRun 'ls -la /usr/share/java/prometheus-jmx-exporter/')"
@@ -97,7 +109,7 @@ assertContains "$env_variables" "JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE=/opt/jboss
   || reportError "JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE invalid"
 assertContains "$env_variables" "JBOSS_CONTAINER_S2I_CORE_MODULE=/opt/jboss/container/s2i/core/$" \
   || reportError "JBOSS_CONTAINER_S2I_CORE_MODULE invalid"
-assertContains "$env_variables" "JOLOKIA_VERSION=2.1.2$" \
+assertContains "$env_variables" "JOLOKIA_VERSION=2.6.0$" \
   || reportError "JOLOKIA_VERSION invalid"
 assertContains "$env_variables" "AB_JOLOKIA_PASSWORD_RANDOM=true$" \
   || reportError "AB_JOLOKIA_PASSWORD_RANDOM invalid"
