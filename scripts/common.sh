@@ -16,11 +16,11 @@ function dockerRunE() {
 }
 
 function assertContains() {
-  echo "$1" | grep "$2" > /dev/null
+  echo "$1" | grep -- "$2" > /dev/null
 }
 
 function assertMatches() {
-  echo "$1" | grep -E "$2" > /dev/null
+  echo "$1" | grep -E -- "$2" > /dev/null
 }
 
 function reportError() {
