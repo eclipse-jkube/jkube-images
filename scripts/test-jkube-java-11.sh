@@ -40,9 +40,9 @@ assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 # Jolokia module
 jolokia_jar="$(dockerRun 'ls -la /usr/share/java/jolokia-jvm-agent/')"
 assertContains "$jolokia_jar" "jolokia-jvm.jar" || reportError "jolokia-jvm.jar not found"
-jolokia_manifest="$(dockerRun 'unzip -p /usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar META-INF/MANIFEST.MF')"
-assertMatches "$jolokia_manifest" "Implementation-Version: 2\.1\.2" \
-  || reportError "Jolokia jar manifest version mismatch:\n\n$jolokia_manifest"
+jolokia_version_props="$(dockerRunE /bin/bash -c 'cd /tmp && jar xf /usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar version.properties && cat version.properties')"
+assertMatches "$jolokia_version_props" "jolokia\.version = 2\.1\.2" \
+  || reportError "Jolokia jar version mismatch:\n\n$jolokia_version_props"
 jolokia="$(dockerRun 'ls -la /opt/jboss/container/jolokia/')"
 assertContains "$jolokia" "jolokia-opts" || reportError "jolokia-opts not found"
 assertContains "$jolokia" "etc" || reportError "etc not found"
