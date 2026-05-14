@@ -1,5 +1,5 @@
 # Ported from https://github.com/jboss-openshift/cct_module/tree/8411125f8e1b45d48c93c8bcd51d39541ce4a755/jboss/container/prometheus/8.2
-# Uses Maven Central Artifact instead of RPM package because there's no package (yet) for RHEL 9
+# Uses GitHub Releases artifact instead of RPM package because there's no package (yet) for RHEL 9
 schema_version: 1
 
 name: jboss.container.prometheus

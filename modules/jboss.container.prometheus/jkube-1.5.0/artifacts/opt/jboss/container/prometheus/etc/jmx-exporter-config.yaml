@@ -1,5 +1,5 @@
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-blacklistObjectNames:
+excludeObjectNames:
   # handled by agent's default exporter
   - "java.lang:*"
