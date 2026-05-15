@@ -101,7 +101,7 @@ assertContains "$env_variables" "JBOSS_CONTAINER_JOLOKIA_MODULE=/opt/jboss/conta
 # Prometheus module
 prometheus_jar="$(dockerRun 'ls -la /usr/share/java/prometheus-jmx-exporter/')"
 assertContains "$prometheus_jar" "jmx_prometheus_javaagent.jar" || reportError "jmx_prometheus_javaagent.jar not found"
-prometheus_manifest="$(dockerRun 'unzip -p /usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar META-INF/MANIFEST.MF')"
+prometheus_manifest="$(dockerRunE /bin/bash -c 'cd /tmp && jar xf /usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar META-INF/MANIFEST.MF && cat META-INF/MANIFEST.MF')"
 assertMatches "$prometheus_manifest" "Implementation-Version: 1\.5\.0" \
   || reportError "Prometheus jar manifest version mismatch:\n\n$prometheus_manifest"
 prometheus="$(dockerRun 'ls -la /opt/jboss/container/prometheus/')"
@@ -116,11 +116,11 @@ assertContains "$prometheus_opts_output" "-javaagent:/usr/share/java/prometheus-
 # Verify agent jar loads on the image's JDK
 prometheus_agent_load="$(dockerRunE /bin/bash -c 'java -javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=0:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml -version')" \
   || reportError "Prometheus agent jar failed to load on image JDK:\n\n$prometheus_agent_load"
-prometheus_off_output="$(dockerRunE /bin/bash -c 'AB_PROMETHEUS_OFF=true source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || true
+prometheus_off_output="$(dockerRunE /bin/bash -c 'export AB_PROMETHEUS_OFF=true; source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || true
 ! assertContains "$prometheus_off_output" "-javaagent:" \
   || reportError "prometheus-opts should not emit -javaagent when AB_PROMETHEUS_OFF is set:\n\n$prometheus_off_output"
 # Verify AB_PROMETHEUS_OFF also works with value '1'
-prometheus_off_output_1="$(dockerRunE /bin/bash -c 'AB_PROMETHEUS_OFF=1 source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || true
+prometheus_off_output_1="$(dockerRunE /bin/bash -c 'export AB_PROMETHEUS_OFF=1; source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || true
 ! assertContains "$prometheus_off_output_1" "-javaagent:" \
   || reportError "prometheus-opts should not emit -javaagent when AB_PROMETHEUS_OFF=1:\n\n$prometheus_off_output_1"
 assertContains "$env_variables" "JBOSS_CONTAINER_PROMETHEUS_MODULE=/opt/jboss/container/prometheus$" \
