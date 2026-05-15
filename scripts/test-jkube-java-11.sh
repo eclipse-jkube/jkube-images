@@ -6,6 +6,7 @@ BASEDIR=$(dirname "$BASH_SOURCE")
 source "$BASEDIR/common.sh"
 
 IMAGE="quay.io/jkube/jkube-java-11:$TAG_OR_LATEST"
+env_variables="$(dockerRun 'env')"
 
 assertMatches "$(dockerRun 'id')" 'uid=1000([^ ]*)? gid=0\(root\) groups=0\(root\)' || reportError "Invalid run user, should be 1000"
 
@@ -39,9 +40,40 @@ assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 # Jolokia module
 jolokia_jar="$(dockerRun 'ls -la /usr/share/java/jolokia-jvm-agent/')"
 assertContains "$jolokia_jar" "jolokia-jvm.jar" || reportError "jolokia-jvm.jar not found"
+jolokia_version_props="$(dockerRunE /bin/bash -c 'cd /tmp && jar xf /usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar version.properties && cat version.properties')"
+assertMatches "$jolokia_version_props" "jolokia\.version = 2\.1\.2" \
+  || reportError "Jolokia jar version mismatch:\n\n$jolokia_version_props"
 jolokia="$(dockerRun 'ls -la /opt/jboss/container/jolokia/')"
 assertContains "$jolokia" "jolokia-opts" || reportError "jolokia-opts not found"
 assertContains "$jolokia" "etc" || reportError "etc not found"
+# Verify jolokia-opts is executable
+assertMatches "$jolokia" '^-rwx.*jolokia-opts$' || reportError "jolokia-opts is not executable"
+# Verify jolokia-opts produces the expected javaagent string
+jolokia_opts_output="$(dockerRunE /bin/bash -c '. /opt/jboss/container/jolokia/jolokia-opts')" || reportError "Failed to run jolokia-opts"
+assertContains "$jolokia_opts_output" "-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties" \
+  || reportError "jolokia-opts output invalid:\n\n$jolokia_opts_output"
+# Verify jolokia-opts respects AB_JOLOKIA_OFF
+jolokia_off_output="$(dockerRunE /bin/bash -c 'AB_JOLOKIA_OFF=true . /opt/jboss/container/jolokia/jolokia-opts')" || true
+! assertContains "$jolokia_off_output" "-javaagent:" \
+  || reportError "jolokia-opts should not emit -javaagent when AB_JOLOKIA_OFF is set:\n\n$jolokia_off_output"
+# Verify OpenShift cert-auth branch activates when SA ca.crt is present
+ca_dir="$(mktemp -d)" && : > "$ca_dir/ca.crt"
+jolokia_openshift_props="$(docker run --rm --pull never \
+    -v "$ca_dir/ca.crt:/var/run/secrets/kubernetes.io/serviceaccount/ca.crt:ro" \
+    "$IMAGE" /bin/bash -c '. /opt/jboss/container/jolokia/jolokia-opts \
+      && cat /opt/jboss/container/jolokia/etc/jolokia.properties' 2>&1)"
+rm -rf "$ca_dir"
+assertContains "$jolokia_openshift_props" "useSslClientAuthentication=true" \
+  || reportError "OpenShift client cert auth not enabled when ca.crt is present"
+assertContains "$jolokia_openshift_props" "protocol=https" \
+  || reportError "Jolokia protocol should be https when OpenShift auth is active"
+assertContains "$jolokia_openshift_props" "caCert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt" \
+  || reportError "caCert path missing in jolokia.properties"
+assertContains "$jolokia_openshift_props" "clientPrincipal=cn=system:master-proxy" \
+  || reportError "Default OpenShift clientPrincipal missing"
+# Verify JBOSS_CONTAINER_JOLOKIA_MODULE env var
+assertContains "$env_variables" "JBOSS_CONTAINER_JOLOKIA_MODULE=/opt/jboss/container/jolokia$" \
+  || reportError "JBOSS_CONTAINER_JOLOKIA_MODULE invalid"
 
 # Prometheus module
 prometheus_jar="$(dockerRun 'ls -la /usr/share/java/prometheus-jmx-exporter/')"
@@ -57,7 +89,6 @@ assertContains "$s2i" "run" || reportError "run not found"
 assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' || reportError "Invalid s2i assemble script"
 
 # Env
-env_variables="$(dockerRun 'env')"
 assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-11$" \
   || reportError "JAVA_HOME invalid"
 assertContains "$env_variables" "JAVA_VERSION=11$" \
