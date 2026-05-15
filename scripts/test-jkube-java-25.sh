@@ -9,7 +9,7 @@ IMAGE="quay.io/jkube/jkube-java-25:$TAG_OR_LATEST"
 env_variables="$(dockerRun 'env')"
 
 # User
-assertContains "$(dockerRun 'id')" "uid=1000 gid=0(root) groups=0(root)" || reportError "Invalid run user, should be 1000"
+assertMatches "$(dockerRun 'id')" 'uid=1000([^ ]*)? gid=0\(root\) groups=0\(root\)' || reportError "Invalid run user, should be 1000"
 assertMatches "$(dockerRun 'pwd')" '/home/jboss' || reportError "Invalid home directory"
 
 # Java (xxx.openjdk.jdk)
@@ -53,16 +53,29 @@ assertContains "$debug_options" "[-]agentlib:jdwp=transport=dt_socket,server=y,s
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 # shellcheck disable=SC2016
-run_java_exec="$(dockerRunE /bin/bash -c 'JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /opt/jboss/container/java/run/run-java.sh')" || reportError "Failed to get run_java_exec"
+run_java_exec="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /opt/jboss/container/java/run/run-java.sh); exit 0')" || reportError "Failed to get run_java_exec"
 assertMatches "$run_java_exec" ".+java -XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar.+" \
   || reportError "Invalid run_java_exec:\n\n$run_java_exec"
 
 # Jolokia module
 jolokia_jar="$(dockerRun 'ls -la /usr/share/java/jolokia-jvm-agent/')"
 assertContains "$jolokia_jar" "jolokia-jvm.jar" || reportError "jolokia-jvm.jar not found"
+jolokia_version_props="$(dockerRunE /bin/bash -c 'cd /tmp && jar xf /usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar version.properties && cat version.properties')"
+assertMatches "$jolokia_version_props" "jolokia\.version = 2\.1\.2" \
+  || reportError "Jolokia jar version mismatch:\n\n$jolokia_version_props"
 jolokia="$(dockerRun 'ls -la /opt/jboss/container/jolokia/')"
 assertContains "$jolokia" "jolokia-opts" || reportError "jolokia-opts not found"
 assertContains "$jolokia" "etc" || reportError "etc not found"
+# Verify jolokia-opts is executable
+assertMatches "$jolokia" '^-rwx.*jolokia-opts$' || reportError "jolokia-opts is not executable"
+# Verify jolokia-opts produces the expected javaagent string
+jolokia_opts_output="$(dockerRunE /bin/bash -c '. /opt/jboss/container/jolokia/jolokia-opts')" || reportError "Failed to run jolokia-opts"
+assertContains "$jolokia_opts_output" "-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties" \
+  || reportError "jolokia-opts output invalid:\n\n$jolokia_opts_output"
+# Verify jolokia-opts respects AB_JOLOKIA_OFF
+jolokia_off_output="$(dockerRunE /bin/bash -c 'AB_JOLOKIA_OFF=true . /opt/jboss/container/jolokia/jolokia-opts')" || true
+! assertContains "$jolokia_off_output" "-javaagent:" \
+  || reportError "jolokia-opts should not emit -javaagent when AB_JOLOKIA_OFF is set:\n\n$jolokia_off_output"
 # Verify OpenShift cert-auth branch activates when SA ca.crt is present
 ca_dir="$(mktemp -d)"
 trap 'rm -rf "$ca_dir"' EXIT
@@ -79,13 +92,39 @@ assertContains "$jolokia_openshift_props" "protocol=https" \
   || reportError "Jolokia protocol should be https when OpenShift auth is active"
 assertContains "$jolokia_openshift_props" "caCert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt" \
   || reportError "caCert path missing in jolokia.properties"
+assertContains "$jolokia_openshift_props" "clientPrincipal=cn=system:master-proxy" \
+  || reportError "Default OpenShift clientPrincipal missing"
+# Verify JBOSS_CONTAINER_JOLOKIA_MODULE env var
+assertContains "$env_variables" "JBOSS_CONTAINER_JOLOKIA_MODULE=/opt/jboss/container/jolokia$" \
+  || reportError "JBOSS_CONTAINER_JOLOKIA_MODULE invalid"
 
 # Prometheus module
 prometheus_jar="$(dockerRun 'ls -la /usr/share/java/prometheus-jmx-exporter/')"
 assertContains "$prometheus_jar" "jmx_prometheus_javaagent.jar" || reportError "jmx_prometheus_javaagent.jar not found"
+prometheus_manifest="$(dockerRunE /bin/bash -c 'cd /tmp && jar xf /usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar META-INF/MANIFEST.MF && cat META-INF/MANIFEST.MF')"
+assertMatches "$prometheus_manifest" "Implementation-Version: 1\.5\.0" \
+  || reportError "Prometheus jar manifest version mismatch:\n\n$prometheus_manifest"
 prometheus="$(dockerRun 'ls -la /opt/jboss/container/prometheus/')"
 assertContains "$prometheus" "prometheus-opts" || reportError "prometheus-opts not found"
 assertContains "$prometheus" "etc" || reportError "etc not found"
+assertMatches "$prometheus" '^-rwx.*prometheus-opts$' || reportError "prometheus-opts is not executable"
+prometheus_config="$(dockerRun 'ls -la /opt/jboss/container/prometheus/etc/')"
+assertContains "$prometheus_config" "jmx-exporter-config.yaml" || reportError "jmx-exporter-config.yaml not found"
+prometheus_opts_output="$(dockerRunE /bin/bash -c 'source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || reportError "Failed to run prometheus-opts"
+assertContains "$prometheus_opts_output" "-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=9779:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml" \
+  || reportError "prometheus-opts output invalid:\n\n$prometheus_opts_output"
+# Verify agent jar loads on the image's JDK
+prometheus_agent_load="$(dockerRunE /bin/bash -c 'java -javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=0:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml -version')" \
+  || reportError "Prometheus agent jar failed to load on image JDK:\n\n$prometheus_agent_load"
+prometheus_off_output="$(dockerRunE /bin/bash -c 'export AB_PROMETHEUS_OFF=true; source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || true
+! assertContains "$prometheus_off_output" "-javaagent:" \
+  || reportError "prometheus-opts should not emit -javaagent when AB_PROMETHEUS_OFF is set:\n\n$prometheus_off_output"
+# Verify AB_PROMETHEUS_OFF also works with value '1'
+prometheus_off_output_1="$(dockerRunE /bin/bash -c 'export AB_PROMETHEUS_OFF=1; source /opt/jboss/container/prometheus/prometheus-opts && get_prometheus_opts')" || true
+! assertContains "$prometheus_off_output_1" "-javaagent:" \
+  || reportError "prometheus-opts should not emit -javaagent when AB_PROMETHEUS_OFF=1:\n\n$prometheus_off_output_1"
+assertContains "$env_variables" "JBOSS_CONTAINER_PROMETHEUS_MODULE=/opt/jboss/container/prometheus$" \
+  || reportError "JBOSS_CONTAINER_PROMETHEUS_MODULE invalid"
 
 # S2I (xxx.java.s2i.bash)
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
@@ -93,7 +132,7 @@ assertContains "$s2i" "assemble" || reportError "assemble not found"
 assertContains "$s2i" "run" || reportError "run not found"
 assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' || reportError "Invalid s2i assemble script"
 # shellcheck disable=SC2016
-s2i_run="$(dockerRunE /bin/bash -c 'JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /usr/local/s2i/run')" || reportError "Failed to get s2i_run"
+s2i_run="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /usr/local/s2i/run); exit 0')" || reportError "Failed to get s2i_run"
 assertJolokia="-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties"
 assertPrometheus="-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=9779:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml"
 assertJavaExec="-XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar"

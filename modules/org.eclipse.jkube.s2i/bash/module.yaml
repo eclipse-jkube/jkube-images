@@ -23,6 +23,7 @@ modules:
     - name: org.eclipse.jkube.maven.s2i
     - name: org.eclipse.jkube.run.bash
     - name: org.eclipse.jkube.prometheus
+      version: 1.5.0
     - name: jboss.container.util.logging.bash
 
 packages:
