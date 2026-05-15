@@ -19,6 +19,8 @@ jobs:
         image:
           - name: 'jkube-java'
             args: ''
+          - name: 'jkube-java-25'
+            args: ''
           - name: 'jkube-java-17'
             args: ''
           - name: 'jkube-java-11'

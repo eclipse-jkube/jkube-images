@@ -1,0 +1,59 @@
+schema_version: 1
+
+name: "quay.io/jkube/jkube-java-25"
+description: "Platform for building and running plain Java 25 applications (fat-jar and flat classpath)"
+version: "latest"
+from: "registry.access.redhat.com/ubi9/ubi-minimal:9.5"
+
+labels:
+  - name: "io.k8s.display-name"
+    value: "Eclipse JKube - Java 25 (UBI9)"
+  - name: "io.k8s.description"
+    value: "Platform for building and running plain Java 25 applications (fat-jar and flat classpath)"
+  - name: "io.openshift.tags"
+    value: "builder,jkube,java"
+  - name: "io.openshift.s2i.scripts-url"
+    value: "image:///usr/local/s2i"
+  - name: "io.openshift.s2i.destination"
+    value: "/tmp"
+  - name: "maintainer"
+    value: "Eclipse JKube Team <jkube-dev@eclipse.org>"
+
+envs:
+  - name: DEPLOYMENTS_DIR
+    value: "/deployments"
+  - name: PATH
+    value: "$PATH:/usr/local/s2i"
+  - name: GC_CONTAINER_OPTIONS
+    value: " "
+
+packages:
+  manager: microdnf
+  manager_flags: --setopt=install_weak_deps=0
+
+modules:
+  repositories:
+    - path: modules
+    - name: cct_module
+      git:
+        url: https://github.com/jboss-openshift/cct_module.git
+        ref: 0.45.5
+  install:
+    - name: org.eclipse.jkube.debug
+      version: 1.0.0
+    - name: jboss.container.microdnf-bz-workaround
+    - name: jboss.container.openjdk.jdk
+      version: "25"
+    - name: jboss.container.dnf
+    - name: org.eclipse.jkube.s2i.bash
+      version: 1.0.0
+    - name: org.eclipse.jkube.jolokia
+      version: 2.1.2
+    - name: jboss.container.util.logging.bash
+      # Removes any other Java JDK that might have been downloaded by other packages (run last)
+    - name: org.eclipse.jkube.jvm.singleton-jdk
+
+run:
+  user: 1000
+  cmd:
+    - "/usr/local/s2i/run"
