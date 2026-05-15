@@ -9,6 +9,7 @@ These images are available on [Quay.io](https://quay.io/organization/jkube)
 ### jkube-java
 
 - https://quay.io/repository/jkube/jkube-java
+- https://quay.io/repository/jkube/jkube-java-25
 - https://quay.io/repository/jkube/jkube-java-17
 - https://quay.io/repository/jkube/jkube-java-11
 
