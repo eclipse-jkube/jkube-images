@@ -57,14 +57,17 @@ jolokia_off_output="$(dockerRunE /bin/bash -c 'AB_JOLOKIA_OFF=true . /opt/jboss/
 ! assertContains "$jolokia_off_output" "-javaagent:" \
   || reportError "jolokia-opts should not emit -javaagent when AB_JOLOKIA_OFF is set:\n\n$jolokia_off_output"
 # Verify OpenShift cert-auth branch activates when SA ca.crt is present
-ca_dir="$(mktemp -d)" && : > "$ca_dir/ca.crt"
+ca_dir="$(mktemp -d)"
+trap 'rm -rf "$ca_dir"' EXIT
+: > "$ca_dir/ca.crt"
 jolokia_openshift_props="$(docker run --rm --pull never \
     -v "$ca_dir/ca.crt:/var/run/secrets/kubernetes.io/serviceaccount/ca.crt:ro" \
     "$IMAGE" /bin/bash -c '. /opt/jboss/container/jolokia/jolokia-opts \
       && cat /opt/jboss/container/jolokia/etc/jolokia.properties' 2>&1)"
-rm -rf "$ca_dir"
 assertContains "$jolokia_openshift_props" "useSslClientAuthentication=true" \
   || reportError "OpenShift client cert auth not enabled when ca.crt is present"
+assertContains "$jolokia_openshift_props" "extendedClientCheck=true" \
+  || reportError "extendedClientCheck not enabled in OpenShift cert-auth properties"
 assertContains "$jolokia_openshift_props" "protocol=https" \
   || reportError "Jolokia protocol should be https when OpenShift auth is active"
 assertContains "$jolokia_openshift_props" "caCert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt" \

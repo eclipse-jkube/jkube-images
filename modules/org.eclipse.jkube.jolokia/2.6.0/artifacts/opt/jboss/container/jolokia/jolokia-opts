@@ -29,7 +29,7 @@ get_jolokia_properties() {
   # by default if not explicitly turned off by setting to 'false'
   if [ "x${AB_JOLOKIA_AUTH_OPENSHIFT}" != "xfalse" ] && [ -f "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt" ]; then
      echo "useSslClientAuthentication=true"
-     echo "extraClientCheck=true"
+     echo "extendedClientCheck=true"
 
      if [ -z ${use_https+x} ]; then
        echo "protocol=https"

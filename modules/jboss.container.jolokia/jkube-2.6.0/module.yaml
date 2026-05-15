@@ -62,7 +62,7 @@ artifacts:
   - name: jolokia-jvm.jar
     target: jolokia-jvm.jar
     url: https://repo1.maven.org/maven2/org/jolokia/jolokia-agent-jvm/2.6.0/jolokia-agent-jvm-2.6.0-javaagent.jar
-    md5: a3e097d640bc3aa7dbac9a7fc82ba077
+    sha256: 95c2c1230970ac0ad71b9cb556b8a55c4c6008e9ffd7745be7797f477120b6ae
 
 execute:
   - script: configure.sh
