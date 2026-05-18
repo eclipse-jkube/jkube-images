@@ -18,7 +18,6 @@ assertMatches "$maven_version" 'Apache Maven 3.8.[0-9]+' || reportError "Invalid
 
 # run-java dependent scripts
 jvm_tools="$(dockerRun 'ls -la /opt/jboss/container/java/jvm/')"
-assertContains "$jvm_tools" "container-limits$" || reportError "container-limits not found"
 assertContains "$jvm_tools" "debug-options$" || reportError "debug-options not found"
 assertContains "$jvm_tools" "java-default-options$" || reportError "java-default-options not found"
 
@@ -29,12 +28,11 @@ assertContains "$debug_options" "[-]agentlib:jdwp=transport=dt_socket,server=y,s
 
 # java-default-options
 java_default_options="$(dockerRun '/opt/jboss/container/java/jvm/java-default-options')"
-assertContains "$java_default_options" "^-XX:+UseParallelOldGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:+ExitOnOutOfMemoryError$" \
+assertMatches "$java_default_options" "^-XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError$" \
   || reportError "java_default_options returns unexpected options <$java_default_options>"
 
 # Default run-java module
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
-assertContains "$run_java" "run-env.sh" || reportError "run-env.sh not found"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 
 # Jolokia module
@@ -135,3 +133,10 @@ assertContains "$env_variables" "AB_JOLOKIA_HTTPS=true$" \
   || reportError "AB_JOLOKIA_HTTPS invalid"
 assertContains "$env_variables" "AB_PROMETHEUS_JMX_EXPORTER_CONFIG=/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml$" \
   || reportError "AB_PROMETHEUS_JMX_EXPORTER_CONFIG invalid"
+
+# Additional tools
+netstat_version="$(dockerRun 'netstat --version')"
+assertMatches "$netstat_version" 'net-tools 2.[0-9]+' || reportError "Invalid netstat (net-tools) version:\n\n$netstat_version"
+
+ps_version="$(dockerRun 'ps --version')"
+assertMatches "$ps_version" 'ps from procps-ng 3.3.[0-9]+' || reportError "Invalid ps (procps-ng) version:\n\n$ps_version"
