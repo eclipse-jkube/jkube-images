@@ -17,9 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - name: 'jkube-java'
-            args: ''
           - name: 'jkube-java-25'
+            args: ''
+          - name: 'jkube-java-21'
             args: ''
           - name: 'jkube-java-17'
             args: ''
@@ -44,7 +44,15 @@ jobs:
         run: |
           echo "Building quay.io/jkube/${{ matrix.image.name }}:${TAG}"
           cekit --descriptor ${{ matrix.image.name }}.yaml build docker ${{ matrix.image.args }} --tag="quay.io/jkube/${{ matrix.image.name }}:${TAG}"
+      - name: Tag jkube-java
+        if: matrix.image.name == 'jkube-java-25'
+        run: |
+          docker tag "quay.io/jkube/jkube-java-25:${TAG}" "quay.io/jkube/jkube-java:${TAG}"
       - name: Test
         if: success()
         run: |
           ./scripts/test-${{ matrix.image.name }}.sh
+      - name: Test jkube-java
+        if: success() && matrix.image.name == 'jkube-java-25'
+        run: |
+          ./scripts/test-jkube-java.sh

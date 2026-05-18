@@ -61,7 +61,7 @@ assertMatches "$run_java_exec" ".+java -XX:MaxRAMPercentage=80.0 -XX:MinHeapFree
 jolokia_jar="$(dockerRun 'ls -la /usr/share/java/jolokia-jvm-agent/')"
 assertContains "$jolokia_jar" "jolokia-jvm.jar" || reportError "jolokia-jvm.jar not found"
 jolokia_version_props="$(dockerRunE /bin/bash -c 'cd /tmp && jar xf /usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar version.properties && cat version.properties')"
-assertMatches "$jolokia_version_props" "jolokia\.version = 2\.1\.2" \
+assertMatches "$jolokia_version_props" "jolokia\.version = 2\.6\.0" \
   || reportError "Jolokia jar version mismatch:\n\n$jolokia_version_props"
 jolokia="$(dockerRun 'ls -la /opt/jboss/container/jolokia/')"
 assertContains "$jolokia" "jolokia-opts" || reportError "jolokia-opts not found"
@@ -150,7 +150,7 @@ assertContains "$env_variables" "JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE=/opt/jboss
   || reportError "JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE invalid"
 assertContains "$env_variables" "JBOSS_CONTAINER_S2I_CORE_MODULE=/opt/jboss/container/s2i/core/$" \
   || reportError "JBOSS_CONTAINER_S2I_CORE_MODULE invalid"
-assertContains "$env_variables" "JOLOKIA_VERSION=2.1.2$" \
+assertContains "$env_variables" "JOLOKIA_VERSION=2.6.0$" \
   || reportError "JOLOKIA_VERSION invalid"
 assertContains "$env_variables" "AB_JOLOKIA_PASSWORD_RANDOM=true$" \
   || reportError "AB_JOLOKIA_PASSWORD_RANDOM invalid"
