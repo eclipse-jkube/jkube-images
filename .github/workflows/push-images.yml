@@ -13,6 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         image:
+          - name: 'jkube-java'
+            args: ''
           - name: 'jkube-java-25'
             args: ''
           - name: 'jkube-java-21'
@@ -50,11 +52,3 @@ jobs:
           echo "Pushing ${TAG}"
           docker login -u=${{ secrets.QUAY_USER }} -p=${{ secrets.QUAY_TOKEN }} quay.io
           docker push ${TAG}
-      - name: Tag and push jkube-java
-        if: matrix.image.name == 'jkube-java-25'
-        run: |
-          JAVA_TAG="${TAG/jkube-java-25/jkube-java}"
-          echo "Tagging ${TAG} as ${JAVA_TAG}"
-          docker tag "${TAG}" "${JAVA_TAG}"
-          echo "Pushing ${JAVA_TAG}"
-          docker push "${JAVA_TAG}"
