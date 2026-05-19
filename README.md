@@ -10,8 +10,11 @@ These images are available on [Quay.io](https://quay.io/organization/jkube)
 
 - https://quay.io/repository/jkube/jkube-java
 - https://quay.io/repository/jkube/jkube-java-25
+- https://quay.io/repository/jkube/jkube-java-21
 - https://quay.io/repository/jkube/jkube-java-17
 - https://quay.io/repository/jkube/jkube-java-11
+
+`jkube-java` tracks the latest LTS (currently Java 25, identical to `jkube-java-25`).
 
 Base image to be used by any `JavaExecGenerator` implementation. The image is based on
 `ubi9/ubi-minimal`

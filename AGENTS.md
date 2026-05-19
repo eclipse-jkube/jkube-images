@@ -56,7 +56,7 @@ Migration status:
 | `jboss.container.java.jvm.bash` `debug-options` | Shadow-fork override (kept under cct_module name to override at install time) | `modules/jboss.container.java.jvm.bash.debug-options-override/` |
 | `jboss.container.openjdk.jdk` (17, 21) | Shadow-fork (cct_module only ships 8/11) | `modules/jboss.container.openjdk.jdk/{17,21}/` |
 | `jboss.container.jolokia` | Shadow-fork (RPM → Maven Central; cct_module's RPM doesn't exist on RHEL 9) | `modules/jboss.container.jolokia/{jkube-1.7.2,jkube-2.0.0,jkube-2.1.2,jkube-2.6.0}/` — also rewritten under `modules/org.eclipse.jkube.jolokia/{2.0.0,2.1.2,2.6.0}/` |
-| `jboss.container.prometheus` | Shadow-fork + jkube rewrite, same RPM→MavenCentral reason | `modules/jboss.container.prometheus/jkube-0.20.0/` + `modules/org.eclipse.jkube.prometheus/0.20.0/` |
+| `jboss.container.prometheus` | Shadow-fork + jkube rewrite, same RPM→MavenCentral reason | `modules/jboss.container.prometheus/{jkube-0.20.0,jkube-1.5.0}/` + `modules/org.eclipse.jkube.prometheus/{0.20.0,1.5.0}/` |
 | `jboss.container.maven` | Shadow-fork + jkube rewrite | `modules/jboss.container.maven/8.2.3.8/` + `modules/org.eclipse.jkube.maven/…/` |
 | `jboss.container.s2i.core.bash` / `jboss.container.java.s2i.bash` | Rewritten | `modules/org.eclipse.jkube.s2i/{core,bash}/` |
 | `jboss.container.user` | Rewritten | `modules/org.eclipse.jkube.user/` |
@@ -75,7 +75,7 @@ Every image in this repo is consumed by a specific JKube class. Knowing *who* co
 
 | Image | JKube consumer | Stable interface JKube relies on |
 |---|---|---|
-| `jkube-java`, `jkube-java-11` | `JavaExecGenerator` (`jkube-kit/generator/java-exec/.../JavaExecGenerator.java`) | Honors `JAVA_APP_DIR`, `JAVA_MAIN_CLASS`, `JAVA_OPTIONS`, `AB_JOLOKIA_OFF`, `AB_PROMETHEUS_OFF`. Entrypoint `/usr/local/s2i/run` sources `run-java.sh`. |
+| `jkube-java`, `jkube-java-25`, `jkube-java-21`, `jkube-java-17`, `jkube-java-11` | `JavaExecGenerator` (`jkube-kit/generator/java-exec/.../JavaExecGenerator.java`) | Honors `JAVA_APP_DIR`, `JAVA_MAIN_CLASS`, `JAVA_OPTIONS`, `AB_JOLOKIA_OFF`, `AB_PROMETHEUS_OFF`. Entrypoint `/usr/local/s2i/run` sources `run-java.sh`. `jkube-java` is the default consumer image and tracks the latest LTS (currently a re-tag of `jkube-java-25`). |
 | `jkube-tomcat` (Tomcat 10) | `WebAppGenerator` + `TomcatAppSeverHandler` (`jkube-kit/generator/webapp/.../handler/TomcatAppSeverHandler.java`) | Honors `DEPLOY_DIR`. **Defaults `TOMCAT_WEBAPPS_DIR=webapps-javaee`** so Servlet 3.0 WARs still work on Tomcat 10 via its built-in `javax→jakarta` translation. Entrypoint `/usr/local/s2i/run`. |
 | `jkube-tomcat9` (Tomcat 9) | Same handler, when user pins Tomcat 9 | Honors `DEPLOY_DIR`. Webapps dir defaults to `webapps`. Entrypoint `/usr/local/s2i/run`. |
 | `jkube-jetty9` | `WebAppGenerator` + `JettyAppSeverHandler` | Honors `DEPLOY_DIR`. Entrypoint `/usr/local/s2i/run`. |
@@ -187,7 +187,10 @@ Three patterns coexist in `modules/`. New code should always use **`org.eclipse.
 2. **`jboss.container.<name>/`** — Local shadow-forks of cct_module modules. These exist *only* because CEKit resolves modules by name and we need to override what the live `cct_module@0.45.5` dependency would otherwise install. As soon as a descriptor stops referencing the cct_module repository, the corresponding shadow-forks should be renamed to `org.eclipse.jkube.<name>`. Don't create new modules under this namespace.
 3. **Bare-name (`run-java/`, `s2i-tomcat/`, `s2i-jetty/`, `s2i-karaf/`)** — Project-local modules predating the namespace convention. Don't add new ones. Existing ones can be renamed under `org.eclipse.jkube.*` opportunistically (coordinate with the maintainer since descriptors reference them by name).
 
-There is a known **transitional inconsistency**: `jkube-java.yaml` (JDK 21) installs `org.eclipse.jkube.jolokia:2.6.0` and `jkube-java-25.yaml` installs `org.eclipse.jkube.jolokia:2.1.2`, while `jkube-java-17.yaml` installs `jboss.container.jolokia:jkube-2.6.0` and `jkube-java-11.yaml` installs `jboss.container.jolokia:jkube-2.1.2`; java-11 and java-17 also install `jboss.container.prometheus:jkube-0.20.0` directly, whereas java-21 and java-25 ship Prometheus transitively via `org.eclipse.jkube.s2i.bash` → `org.eclipse.jkube.prometheus:0.20.0`. The shadow-fork vs jkube-native split is an artifact of the in-progress migration. Note that `jkube-java-11` is pinned to Jolokia **2.1.2** by JDK-bytecode necessity — Jolokia 2.4+ is compiled to JDK 17 bytecode and will not load on JDK 11 — not by migration accident.
+Two **transitional artifacts** of the in-progress migration remain:
+
+1. **Jolokia install path differs by JDK.** `jkube-java-25.yaml` and `jkube-java-21.yaml` use the jkube-native `org.eclipse.jkube.jolokia:2.6.0`; `jkube-java-17.yaml` uses the shadow-fork `jboss.container.jolokia:jkube-2.6.0`; `jkube-java-11.yaml` uses the shadow-fork `jboss.container.jolokia:jkube-2.1.2`. The 11/17 shadow-fork entries are migration leftovers and can be moved to the jkube-native namespace as a follow-up. **`jkube-java-11` is pinned to Jolokia 2.1.2 by JDK-bytecode necessity — Jolokia 2.4+ is compiled to JDK 17 bytecode and will not load on JDK 11 — not by migration accident.**
+2. **Prometheus install path differs.** `jkube-java-11.yaml` and `jkube-java-17.yaml` install `jboss.container.prometheus:jkube-1.5.0` directly; `jkube-java-21.yaml` and `jkube-java-25.yaml` pull `org.eclipse.jkube.prometheus:1.5.0` transitively via `org.eclipse.jkube.s2i.bash`.
 
 ### Design Patterns
 
