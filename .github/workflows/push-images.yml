@@ -17,6 +17,8 @@ jobs:
             args: ''
           - name: 'jkube-java-25'
             args: ''
+          - name: 'jkube-java-21'
+            args: ''
           - name: 'jkube-java-17'
             args: ''
           - name: 'jkube-java-11'
@@ -50,4 +52,3 @@ jobs:
           echo "Pushing ${TAG}"
           docker login -u=${{ secrets.QUAY_USER }} -p=${{ secrets.QUAY_TOKEN }} quay.io
           docker push ${TAG}
-

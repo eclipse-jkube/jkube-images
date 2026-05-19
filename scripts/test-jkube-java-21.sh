@@ -5,7 +5,7 @@ trap 'exit' ERR
 BASEDIR=$(dirname "$BASH_SOURCE")
 source "$BASEDIR/common.sh"
 
-IMAGE="quay.io/jkube/jkube-java:$TAG_OR_LATEST"
+IMAGE="quay.io/jkube/jkube-java-21:$TAG_OR_LATEST"
 env_variables="$(dockerRun 'env')"
 
 # User
@@ -14,10 +14,10 @@ assertMatches "$(dockerRun 'pwd')" '/home/jboss' || reportError "Invalid home di
 
 # Java (xxx.openjdk.jdk)
 java_version="$(dockerRun 'java -version')"
-assertMatches "$java_version" 'openjdk version "25.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
-assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-25$" \
+assertMatches "$java_version" 'openjdk version "21.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
+assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-21$" \
   || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=25$" \
+assertContains "$env_variables" "JAVA_VERSION=21$" \
   || reportError "JAVA_VERSION invalid"
 assertContains "$env_variables" "JBOSS_CONTAINER_OPENJDK_JDK_MODULE=/opt/jboss/container/openjdk/jdk$" \
   || reportError "JBOSS_CONTAINER_OPENJDK_JDK_MODULE invalid"
