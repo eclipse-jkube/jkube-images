@@ -9,9 +9,19 @@ IMAGE="quay.io/jkube/jkube-java-11:$TAG_OR_LATEST"
 env_variables="$(dockerRun 'env')"
 
 assertMatches "$(dockerRun 'id')" 'uid=1000([^ ]*)? gid=0\(root\) groups=0\(root\)' || reportError "Invalid run user, should be 1000"
+assertMatches "$(dockerRun 'pwd')" '/home/jboss' || reportError "Invalid home directory"
 
+# Java (xxx.openjdk.jdk)
 java_version="$(dockerRun 'java -version')"
 assertMatches "$java_version" 'openjdk version "11.0.[0-9]+' || reportError "Invalid Java version:\n\n$java_version"
+assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-11$" \
+  || reportError "JAVA_HOME invalid"
+assertContains "$env_variables" "JAVA_VERSION=11$" \
+  || reportError "JAVA_VERSION invalid"
+assertContains "$env_variables" "JBOSS_CONTAINER_OPENJDK_JDK_MODULE=/opt/jboss/container/openjdk/jdk$" \
+  || reportError "JBOSS_CONTAINER_OPENJDK_JDK_MODULE invalid"
+jvm_options="$(dockerRunE /bin/bash -c '. /opt/jboss/container/openjdk/jdk/jvm-options && jvm_specific_diagnostics')" || reportError "Failed to get jvm_options"
+assertMatches "$jvm_options" '\-Xlog:gc::utctime -XX:NativeMemoryTracking=summary$' || reportError "Invalid jvm_options:\n\n$jvm_options"
 
 maven_version="$(dockerRun 'mvn -version')"
 assertMatches "$maven_version" 'Apache Maven 3.8.[0-9]+' || reportError "Invalid Maven version:\n\n$maven_version"
@@ -30,10 +40,18 @@ assertContains "$debug_options" "[-]agentlib:jdwp=transport=dt_socket,server=y,s
 java_default_options="$(dockerRun '/opt/jboss/container/java/jvm/java-default-options')"
 assertMatches "$java_default_options" "^-XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError$" \
   || reportError "java_default_options returns unexpected options <$java_default_options>"
+# java-default-options override with JAVA_DIAGNOSTICS
+java_default_options="$(dockerRunE /bin/bash -c 'JAVA_DIAGNOSTICS=true /opt/jboss/container/java/jvm/java-default-options')" || reportError "Failed to get java_default_options"
+assertMatches "$java_default_options" '^-XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xlog:gc::utctime -XX:NativeMemoryTracking=summary -XX:\+ExitOnOutOfMemoryError$' \
+  || reportError "Invalid java_default_options (JAVA_DIAGNOSTICS):\n\n$java_default_options"
 
 # Default run-java module
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
+# shellcheck disable=SC2016
+run_java_exec="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /opt/jboss/container/java/run/run-java.sh); exit 0')" || reportError "Failed to get run_java_exec"
+assertMatches "$run_java_exec" ".+java -XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar.+" \
+  || reportError "Invalid run_java_exec:\n\n$run_java_exec"
 
 # Jolokia module
 jolokia_jar="$(dockerRun 'ls -la /usr/share/java/jolokia-jvm-agent/')"
@@ -109,12 +127,15 @@ s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
 assertContains "$s2i" "assemble" || reportError "assemble not found"
 assertContains "$s2i" "run" || reportError "run not found"
 assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' || reportError "Invalid s2i assemble script"
+# shellcheck disable=SC2016
+s2i_run="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /usr/local/s2i/run); exit 0')" || reportError "Failed to get s2i_run"
+assertJolokia="-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties"
+assertPrometheus="-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=9779:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml"
+assertJavaExec="-XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar"
+assertMatches "$s2i_run" ".+java $assertJolokia $assertPrometheus $assertJavaExec.+" \
+  || reportError "Invalid run_java_exec:\n\n$s2i_run"
 
-# Env
-assertContains "$env_variables" "JAVA_HOME=/usr/lib/jvm/java-11$" \
-  || reportError "JAVA_HOME invalid"
-assertContains "$env_variables" "JAVA_VERSION=11$" \
-  || reportError "JAVA_VERSION invalid"
+# Generic environment variables
 assertContains "$env_variables" "DEPLOYMENTS_DIR=/deployments$" \
   || reportError "DEPLOYMENTS_DIR invalid"
 assertContains "$env_variables" "JBOSS_CONTAINER_JAVA_RUN_MODULE=/opt/jboss/container/java/run$" \
