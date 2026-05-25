@@ -37,20 +37,17 @@ modules:
         url: https://github.com/jboss-openshift/cct_module.git
         ref: 0.45.5
   install:
+    - name: org.eclipse.jkube.debug
+      version: 1.0.0
     - name: jboss.container.microdnf-bz-workaround
     - name: jboss.container.openjdk.jdk
       version: "11"
-    - name: jboss.container.maven
-      version: 8.2.3.8
     - name: jboss.container.dnf
-    - name: jboss.container.java.s2i.bash
-    - name: jboss.container.java.run.bash
-    - name: jboss.container.jolokia
-      version: jkube-2.1.2
-    - name: jboss.container.prometheus
-      version: jkube-1.5.0
+    - name: org.eclipse.jkube.s2i.bash
+      version: 1.0.0
+    - name: org.eclipse.jkube.jolokia
+      version: 2.1.2
     - name: jboss.container.util.logging.bash
-    - name: jboss.container.java.jvm.bash.debug-options-override
       # Removes any other Java JDK that might have been downloaded by other packages (run last)
     - name: org.eclipse.jkube.jvm.singleton-jdk
 
