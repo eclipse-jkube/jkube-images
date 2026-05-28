@@ -84,11 +84,11 @@ jobs:
             --tag="${TAG}" \
             target/image
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image: '${{ env.TAG }}'
-          format: cyclonedx-json
-          output-file: '${{ matrix.image.name }}.sbom.json'
+          image-ref: '${{ env.TAG }}'
+          format: 'cyclonedx'
+          output: '${{ matrix.image.name }}.sbom.json'
       - name: Upload SBOM as workflow artifact
         uses: actions/upload-artifact@v4
         with:

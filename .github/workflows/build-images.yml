@@ -66,11 +66,11 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
-          format: cyclonedx-json
-          output-file: '${{ matrix.image.name }}.sbom.json'
+          image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
+          format: 'cyclonedx'
+          output: '${{ matrix.image.name }}.sbom.json'
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
         with:
