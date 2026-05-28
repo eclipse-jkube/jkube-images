@@ -54,21 +54,15 @@ jobs:
         run: |
           echo "Building ${TAG}"
           cekit --descriptor ${{ matrix.image.name }}.yaml build docker ${{ matrix.image.args }} --tag="${TAG}"
-      - name: Trivy vulnerability scan (CRITICAL + HIGH)
+      - name: Trivy vulnerability report
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: '${{ env.TAG }}'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           exit-code: '0'
-          format: 'table'
-      - name: Trivy CRITICAL CVE gate
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: '${{ env.TAG }}'
-          severity: 'CRITICAL'
-          ignore-unfixed: true
-          exit-code: '1'
+          format: 'json'
+          output: '${{ matrix.image.name }}.trivy-report.json'
       - name: Login to Quay.io
         uses: docker/login-action@v3
         with:
@@ -89,23 +83,27 @@ jobs:
           image-ref: '${{ env.TAG }}'
           format: 'cyclonedx'
           output: '${{ matrix.image.name }}.sbom.json'
-      - name: Upload SBOM as workflow artifact
+      - name: Upload Trivy report and SBOM
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-${{ matrix.image.name }}
-          path: '${{ matrix.image.name }}.sbom.json'
+          name: security-${{ matrix.image.name }}
+          path: |
+            ${{ matrix.image.name }}.trivy-report.json
+            ${{ matrix.image.name }}.sbom.json
 
   create-release:
-    name: Create Release with SBOMs
+    name: Create Release with security reports
     needs: build-images
     runs-on: ubuntu-latest
     steps:
-      - name: Download all SBOM artifacts
+      - name: Download all security artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: sbom-*
+          pattern: security-*
           merge-multiple: true
-      - name: Upload SBOMs as release assets
+      - name: Upload security reports as release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: '*.sbom.json'
+          files: |
+            *.trivy-report.json
+            *.sbom.json

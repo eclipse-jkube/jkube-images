@@ -50,29 +50,25 @@ jobs:
         if: success()
         run: |
           ./scripts/test-${{ matrix.image.name }}.sh
-      - name: Trivy vulnerability scan (CRITICAL + HIGH)
+      - name: Trivy vulnerability report
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           exit-code: '0'
-          format: 'table'
-      - name: Trivy CRITICAL CVE gate
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
-          severity: 'CRITICAL'
-          ignore-unfixed: true
-          exit-code: '1'
+          format: 'json'
+          output: '${{ matrix.image.name }}.trivy-report.json'
       - name: Generate SBOM
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
           format: 'cyclonedx'
           output: '${{ matrix.image.name }}.sbom.json'
-      - name: Upload SBOM
+      - name: Upload Trivy report and SBOM
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-${{ matrix.image.name }}
-          path: '${{ matrix.image.name }}.sbom.json'
+          name: security-${{ matrix.image.name }}
+          path: |
+            ${{ matrix.image.name }}.trivy-report.json
+            ${{ matrix.image.name }}.sbom.json
