@@ -25,7 +25,7 @@ jvm_options="$(dockerRunE /bin/bash -c '. /opt/jboss/container/openjdk/jdk/jvm-o
 assertMatches "$jvm_options" '\-Xlog:gc::utctime -XX:NativeMemoryTracking=summary$' || reportError "Invalid jvm_options:\n\n$jvm_options"
 
 maven_version="$(dockerRun 'mvn -version')"
-assertMatches "$maven_version" 'Apache Maven 3.8.[0-9]+' || reportError "Invalid Maven version:\n\n$maven_version"
+assertMatches "$maven_version" 'Apache Maven 3.9.[0-9]+' || reportError "Invalid Maven version:\n\n$maven_version"
 
 # run-java dependent scripts (xxx.java.jvm.bash)
 jvm_tools="$(dockerRun 'ls -la /opt/jboss/container/java/jvm/')"
@@ -166,4 +166,4 @@ netstat_version="$(dockerRun 'netstat --version')"
 assertMatches "$netstat_version" 'net-tools 2.[0-9]+' || reportError "Invalid netstat (net-tools) version:\n\n$netstat_version"
 
 ps_version="$(dockerRun 'ps --version')"
-assertMatches "$ps_version" 'ps from procps-ng 3.3.[0-9]+' || reportError "Invalid ps (procps-ng) version:\n\n$ps_version"
+assertMatches "$ps_version" 'ps from procps-ng 4.0.[0-9]+' || reportError "Invalid ps (procps-ng) version:\n\n$ps_version"
