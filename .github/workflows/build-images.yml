@@ -6,16 +6,22 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 env:
   TAG: latest
 
 jobs:
   build-images:
-    name: Build Images
-    runs-on: ubuntu-latest
+    name: ${{ matrix.image.name }} (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
+        runner:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
         image:
           - name: 'jkube-java'
             args: ''
@@ -37,11 +43,19 @@ jobs:
             args: --no-squash
           - name: 'jkube-tomcat'
             args: --no-squash
+        exclude:
+          - runner: ubuntu-24.04-arm
+            image:
+              name: 'jkube-jetty9'
+              args: ''
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install CEKit
         uses: cekit/actions-setup-cekit@v1.1.7
+      - name: Compute arch
+        run: |
+          echo "ARCH=$(docker version --format '{{.Server.Arch}}')" >> $GITHUB_ENV
       - name: Build ${{ matrix.image.name }}
         run: |
           echo "Building quay.io/jkube/${{ matrix.image.name }}:${TAG}"
@@ -51,24 +65,26 @@ jobs:
         run: |
           ./scripts/test-${{ matrix.image.name }}.sh
       - name: Trivy vulnerability report
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        env:
+          TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db'
         with:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           exit-code: '0'
           format: 'json'
-          output: '${{ matrix.image.name }}.trivy-report.json'
+          output: '${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json'
       - name: Generate SBOM
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
           format: 'cyclonedx'
-          output: '${{ matrix.image.name }}.sbom.json'
+          output: '${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json'
       - name: Upload Trivy report and SBOM
         uses: actions/upload-artifact@v4
         with:
-          name: security-${{ matrix.image.name }}
+          name: security-${{ matrix.image.name }}-${{ env.ARCH }}
           path: |
-            ${{ matrix.image.name }}.trivy-report.json
-            ${{ matrix.image.name }}.sbom.json
+            ${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json
+            ${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json

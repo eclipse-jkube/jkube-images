@@ -6,15 +6,18 @@ on:
       - '*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-images:
-    name: Build and Push Images
-    runs-on: ubuntu-latest
+    name: ${{ matrix.image.name }} (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
+        runner:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
         image:
           - name: 'jkube-java'
             args: ''
@@ -36,54 +39,110 @@ jobs:
             args: --no-squash
           - name: 'jkube-tomcat'
             args: --no-squash
+        exclude:
+          - runner: ubuntu-24.04-arm
+            image:
+              name: 'jkube-jetty9'
+              args: ''
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install CEKit
         uses: cekit/actions-setup-cekit@v1.1.7
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4.1.0
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.1.0
-      - name: Get Tag
-        id: get_version
+      - name: Compute version and arch
         run: |
-          export GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
-          echo "TAG=quay.io/jkube/${{ matrix.image.name }}:${GITHUB_TAG/v/}" >> $GITHUB_ENV
-      - name: Build ${{ matrix.image.name }} (amd64)
+          GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
+          echo "VERSION=${GITHUB_TAG/v/}" >> $GITHUB_ENV
+          echo "ARCH=$(docker version --format '{{.Server.Arch}}')" >> $GITHUB_ENV
+      - name: Build ${{ matrix.image.name }}
         run: |
-          echo "Building ${TAG}"
-          cekit --descriptor ${{ matrix.image.name }}.yaml build docker ${{ matrix.image.args }} --tag="${TAG}"
+          cekit --descriptor ${{ matrix.image.name }}.yaml build docker ${{ matrix.image.args }} \
+            --tag="quay.io/jkube/${{ matrix.image.name }}:${VERSION}-linux-${ARCH}"
+      - name: Test ${{ matrix.image.name }}
+        run: |
+          TAG="${VERSION}-linux-${ARCH}" ./scripts/test-${{ matrix.image.name }}.sh
+      - name: Trivy vulnerability gate
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        env:
+          TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db'
+        with:
+          image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.VERSION }}-linux-${{ env.ARCH }}'
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
+      - name: Generate SBOM
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.VERSION }}-linux-${{ env.ARCH }}'
+          format: 'cyclonedx'
+          output: '${{ matrix.image.name }}-linux-${{ env.ARCH }}.sbom.json'
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.image.name }}-${{ env.ARCH }}
+          path: '${{ matrix.image.name }}-linux-${{ env.ARCH }}.sbom.json'
       - name: Login to Quay.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
-      - name: Build and push multi-arch ${{ matrix.image.name }}
+      - name: Push ${{ matrix.image.name }} (${{ env.ARCH }})
         run: |
-          echo "Building and pushing multi-arch ${TAG}"
-          docker buildx build \
-            --platform linux/amd64,linux/arm64 \
-            --push \
-            --tag="${TAG}" \
-            target/image
-      - name: Generate SBOM
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: '${{ env.TAG }}'
-          format: 'cyclonedx'
-          output: '${{ matrix.image.name }}.sbom.json'
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-${{ matrix.image.name }}
-          path: '${{ matrix.image.name }}.sbom.json'
+          docker push "quay.io/jkube/${{ matrix.image.name }}:${VERSION}-linux-${ARCH}"
 
-  create-release:
-    name: Create Release with security reports
+  push-manifests:
+    name: Push multi-arch manifest ${{ matrix.image.name }}
     needs: build-images
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: 'jkube-java'
+            arches: 'amd64 arm64'
+          - name: 'jkube-java-25'
+            arches: 'amd64 arm64'
+          - name: 'jkube-java-21'
+            arches: 'amd64 arm64'
+          - name: 'jkube-java-17'
+            arches: 'amd64 arm64'
+          - name: 'jkube-java-11'
+            arches: 'amd64 arm64'
+          - name: 'jkube-jetty9'
+            arches: 'amd64'
+          - name: 'jkube-karaf'
+            arches: 'amd64 arm64'
+          - name: 'jkube-remote-dev'
+            arches: 'amd64 arm64'
+          - name: 'jkube-tomcat9'
+            arches: 'amd64 arm64'
+          - name: 'jkube-tomcat'
+            arches: 'amd64 arm64'
+    steps:
+      - name: Login to Quay.io
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_TOKEN }}
+      - name: Create and push manifest
+        run: |
+          GITHUB_TAG=${GITHUB_REF/refs\/tags\//}
+          TAG="quay.io/jkube/${{ matrix.image.name }}:${GITHUB_TAG/v/}"
+          refs=""
+          for arch in ${{ matrix.image.arches }}; do
+            refs="$refs ${TAG}-linux-${arch}"
+          done
+          docker manifest create "${TAG}" $refs
+          docker manifest push "${TAG}"
+
+  create-release:
+    name: Create release with SBOMs
+    needs: push-manifests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download all SBOM artifacts
         uses: actions/download-artifact@v4
@@ -91,6 +150,7 @@ jobs:
           pattern: sbom-*
           merge-multiple: true
       - name: Upload SBOMs as release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: '*.sbom.json'
+          generate_release_notes: true
