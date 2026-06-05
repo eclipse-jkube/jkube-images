@@ -50,7 +50,7 @@ jobs:
               args: ''
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       - name: Install CEKit
         uses: cekit/actions-setup-cekit@v1.1.7
       - name: Compute arch
@@ -82,7 +82,7 @@ jobs:
           format: 'cyclonedx'
           output: '${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json'
       - name: Upload Trivy report and SBOM
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: security-${{ matrix.image.name }}-${{ env.ARCH }}
           path: |
