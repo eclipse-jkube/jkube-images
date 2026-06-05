@@ -138,7 +138,13 @@ jobs:
               const basename = file.replace(/.*\//, '').replace('.trivy-report.json', '');
               const arch = basename.match(/-(amd64|arm64)$/)?.[1] || 'unknown';
               const image = basename.replace(`-${arch}`, '');
-              const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+              let data;
+              try {
+                data = JSON.parse(fs.readFileSync(file, 'utf8'));
+              } catch (e) {
+                core.warning(`Failed to parse ${file}: ${e.message}`);
+                continue;
+              }
               const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
               const critical = vulns.filter(v => v.Severity === 'CRITICAL');
               const high = vulns.filter(v => v.Severity === 'HIGH');
@@ -159,9 +165,13 @@ jobs:
             body += `\n> Scanned with Trivy v0.36.0 | unfixed CVEs excluded`;
 
             await core.summary.addRaw(body).write();
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body
-            });
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body
+              });
+            } catch (e) {
+              core.warning(`Could not post PR comment (expected for fork PRs): ${e.message}`);
+            }
