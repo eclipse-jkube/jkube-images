@@ -83,17 +83,20 @@ jobs:
           output: '${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json'
       - name: Trivy scan summary
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT_FILE: ${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json
+          IMAGE_LABEL: ${{ matrix.image.name }} (${{ env.ARCH }})
         with:
           script: |
             const fs = require('fs');
-            const report = '${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json';
-            if (!fs.existsSync(report)) return;
-            const data = JSON.parse(fs.readFileSync(report, 'utf8'));
+            const {REPORT_FILE, IMAGE_LABEL} = process.env;
+            if (!fs.existsSync(REPORT_FILE)) return;
+            const data = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf8'));
             const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
             const critical = vulns.filter(v => v.Severity === 'CRITICAL');
             const high = vulns.filter(v => v.Severity === 'HIGH');
             const summary = core.summary
-              .addHeading(`${{ matrix.image.name }} (${{ env.ARCH }}): ${critical.length} critical, ${high.length} high`, 3);
+              .addHeading(`${IMAGE_LABEL}: ${critical.length} critical, ${high.length} high`, 3);
             if (critical.length + high.length > 0) {
               summary.addTable([
                 [{data: 'CVE', header: true}, {data: 'Severity', header: true}, {data: 'Package', header: true}, {data: 'Installed', header: true}, {data: 'Fixed', header: true}],
