@@ -81,6 +81,26 @@ jobs:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
           format: 'cyclonedx'
           output: '${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json'
+      - name: Trivy scan summary
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const report = '${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json';
+            if (!fs.existsSync(report)) return;
+            const data = JSON.parse(fs.readFileSync(report, 'utf8'));
+            const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
+            const critical = vulns.filter(v => v.Severity === 'CRITICAL');
+            const high = vulns.filter(v => v.Severity === 'HIGH');
+            const summary = core.summary
+              .addHeading(`${{ matrix.image.name }} (${{ env.ARCH }}): ${critical.length} critical, ${high.length} high`, 3);
+            if (critical.length + high.length > 0) {
+              summary.addTable([
+                [{data: 'CVE', header: true}, {data: 'Severity', header: true}, {data: 'Package', header: true}, {data: 'Installed', header: true}, {data: 'Fixed', header: true}],
+                ...critical.concat(high).map(v => [v.VulnerabilityID, v.Severity, v.PkgName, v.InstalledVersion, v.FixedVersion || 'N/A'])
+              ]);
+            }
+            await summary.write();
       - name: Upload Trivy report and SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -88,3 +108,60 @@ jobs:
           path: |
             ${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json
             ${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json
+
+  security-summary:
+    name: Security summary
+    if: github.event_name == 'pull_request'
+    needs: build-images
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download all security artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: security-*
+          merge-multiple: true
+      - name: Post PR comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const globber = await glob.create('*.trivy-report.json');
+            const files = await globber.glob();
+            files.sort();
+
+            const rows = [];
+            const details = [];
+
+            for (const file of files) {
+              const basename = file.replace(/.*\//, '').replace('.trivy-report.json', '');
+              const arch = basename.match(/-(amd64|arm64)$/)?.[1] || 'unknown';
+              const image = basename.replace(`-${arch}`, '');
+              const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+              const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
+              const critical = vulns.filter(v => v.Severity === 'CRITICAL');
+              const high = vulns.filter(v => v.Severity === 'HIGH');
+              rows.push(`| ${image} | ${arch} | ${critical.length} | ${high.length} |`);
+
+              if (critical.length + high.length > 0) {
+                const cveRows = critical.concat(high)
+                  .map(v => `| ${v.VulnerabilityID} | ${v.Severity} | ${v.PkgName} | ${v.InstalledVersion} | ${v.FixedVersion || 'N/A'} |`)
+                  .join('\n');
+                details.push(`#### ${image} (${arch})\n\n| CVE | Severity | Package | Installed | Fixed |\n|-----|----------|---------|-----------|-------|\n${cveRows}\n`);
+              }
+            }
+
+            let body = `## Trivy Security Scan\n\n| Image | Arch | Critical | High |\n|-------|------|----------|------|\n${rows.join('\n')}\n`;
+            if (details.length > 0) {
+              body += `\n<details><summary>CVE Details</summary>\n\n${details.join('\n')}\n</details>\n`;
+            }
+            body += `\n> Scanned with Trivy v0.36.0 | unfixed CVEs excluded`;
+
+            await core.summary.addRaw(body).write();
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body
+            });
