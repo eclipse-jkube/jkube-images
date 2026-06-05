@@ -62,7 +62,7 @@ jobs:
         run: |
           TAG="${VERSION}-linux-${ARCH}" ./scripts/test-${{ matrix.image.name }}.sh
       - name: Trivy vulnerability gate
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         env:
           TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db'
         with:
@@ -71,13 +71,13 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
       - name: Generate SBOM
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.VERSION }}-linux-${{ env.ARCH }}'
           format: 'cyclonedx'
           output: '${{ matrix.image.name }}-linux-${{ env.ARCH }}.sbom.json'
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-${{ matrix.image.name }}-${{ env.ARCH }}
           path: '${{ matrix.image.name }}-linux-${{ env.ARCH }}.sbom.json'
@@ -145,12 +145,12 @@ jobs:
       contents: write
     steps:
       - name: Download all SBOM artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sbom-*
           merge-multiple: true
       - name: Upload SBOMs as release assets
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           files: '*.sbom.json'
           generate_release_notes: true
