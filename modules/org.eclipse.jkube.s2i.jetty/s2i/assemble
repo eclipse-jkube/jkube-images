@@ -1,0 +1,17 @@
+#!/bin/sh
+set -ex
+
+SRC_DIR=${SRC_DIR:-'/tmp/src/'}
+
+copy_dir() {
+  local src="${SRC_DIR}/$1"
+  if [ -d "${src}" ]; then
+  echo "copying ${src} to ${DEPLOYMENTS_DIR}"
+    # Copy recursively and preserve ownership: -a
+    cp -a ${src}/* "${DEPLOYMENTS_DIR}"
+  fi
+}
+
+copy_dir bin
+copy_dir deployments
+copy_dir maven

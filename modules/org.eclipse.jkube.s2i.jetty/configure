@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+CURRENT_DIR=$(dirname $0)
+
+mkdir -p "/deployments"
+chmod -R a+rwX "/deployments"
+
+# Enable Jetty ee10-deploy module for Jakarta EE 10 web application deployment
+java -jar "$JETTY_HOME/start.jar" --add-modules=ee10-deploy
+
+chown -hR 1000 "$JETTY_BASE"
+mkdir -p "$JETTY_BASE/webapps"
+chmod -R a+rw "$JETTY_BASE/webapps"
+
+chown -hR 1000 "$TMPDIR"
+chmod -R a+rw "$TMPDIR"
+
+cp -rv ${CURRENT_DIR}/s2i /usr/local/s2i
+chmod 755 -R /usr/local/s2i/

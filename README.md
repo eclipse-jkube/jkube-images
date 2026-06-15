@@ -83,11 +83,18 @@ https://quay.io/repository/jkube/jkube-tomcat9
 
 Base image to be used by any `WebAppGenerator` & `TomcatAppSeverHandler` implementation relying on Tomcat 9.
 
+### jkube-jetty
+
+https://quay.io/repository/jkube/jkube-jetty
+
+Base image for Jetty 12 webapp deployments, to be used by any `WebAppGenerator` & `JettyAppSeverHandler` implementation.
+Based on Jetty 12.0.x with Jakarta EE 10 (Servlet 6.x) support.
+
 ### jkube-jetty9
 
 https://quay.io/repository/jkube/jkube-jetty9
 
-Base image to be used by any `WebAppGenerator` & `JettyAppSeverHandler` implementation.
+Base image to be used by any `WebAppGenerator` & `JettyAppSeverHandler` implementation relying on Jetty 9 (EOL).
 
 ### jkube-karaf
 
