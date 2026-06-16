@@ -1,0 +1,120 @@
+name: Post Security Comment
+
+on:
+  workflow_run:
+    workflows: ["Build Images"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  post-comment:
+    name: Post Trivy summary on PR
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download security artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: security-*
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get PR number
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const headSha = context.payload.workflow_run.head_sha;
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: headSha,
+            });
+            const open = prs.filter(p => p.state === 'open');
+            if (open.length === 0) {
+              core.setFailed('No open PR associated with this workflow run');
+              return;
+            }
+            core.setOutput('number', open[0].number);
+      - name: Build and post comment
+        if: steps.pr.outputs.number
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        with:
+          script: |
+            const fs = require('fs');
+            const globber = await glob.create('*.trivy-report.json');
+            const files = await globber.glob();
+            if (files.length === 0) {
+              core.info('No Trivy report files found — skipping comment');
+              return;
+            }
+            files.sort();
+
+            const rows = [];
+            const details = [];
+
+            for (const file of files) {
+              const basename = file.replace(/.*\//, '').replace('.trivy-report.json', '');
+              const arch = basename.match(/-(amd64|arm64)$/)?.[1] || 'unknown';
+              const image = basename.replace(`-${arch}`, '');
+              let data;
+              try {
+                data = JSON.parse(fs.readFileSync(file, 'utf8'));
+              } catch (e) {
+                core.warning(`Failed to parse ${file}: ${e.message}`);
+                continue;
+              }
+              const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
+              const critical = vulns.filter(v => v.Severity === 'CRITICAL');
+              const high = vulns.filter(v => v.Severity === 'HIGH');
+              rows.push(`| ${image} | ${arch} | ${critical.length} | ${high.length} |`);
+
+              if (critical.length + high.length > 0) {
+                const cveRows = critical.concat(high)
+                  .map(v => `| ${v.VulnerabilityID} | ${v.Severity} | ${v.PkgName} | ${v.InstalledVersion} | ${v.FixedVersion || 'N/A'} |`)
+                  .join('\n');
+                details.push(`#### ${image} (${arch})\n\n| CVE | Severity | Package | Installed | Fixed |\n|-----|----------|---------|-----------|-------|\n${cveRows}\n`);
+              }
+            }
+
+            let body = `## Trivy Security Scan\n\n| Image | Arch | Critical | High |\n|-------|------|----------|------|\n${rows.join('\n')}\n`;
+            if (details.length > 0) {
+              body += `\n<details><summary>CVE Details</summary>\n\n${details.join('\n')}\n</details>\n`;
+            }
+            body += `\n> Scanned with Trivy v0.36.0 | unfixed CVEs excluded`;
+
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const marker = '<!-- trivy-security-scan -->';
+            body = `${marker}\n${body}`;
+
+            const {data: comments} = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              core.info(`Updated existing comment ${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+              core.info(`Posted new comment on PR #${prNumber}`);
+            }

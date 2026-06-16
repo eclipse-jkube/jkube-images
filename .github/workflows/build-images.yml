@@ -6,16 +6,22 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 env:
   TAG: latest
 
 jobs:
   build-images:
-    name: Build Images
-    runs-on: ubuntu-latest
+    name: ${{ matrix.image.name }} (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
+        runner:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
         image:
           - name: 'jkube-java'
             args: ''
@@ -37,11 +43,19 @@ jobs:
             args: --no-squash
           - name: 'jkube-tomcat'
             args: --no-squash
+        exclude:
+          - runner: ubuntu-24.04-arm
+            image:
+              name: 'jkube-jetty9'
+              args: ''
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Install CEKit
         uses: cekit/actions-setup-cekit@v1.1.7
+      - name: Compute arch
+        run: |
+          echo "ARCH=$(docker version --format '{{.Server.Arch}}')" >> $GITHUB_ENV
       - name: Build ${{ matrix.image.name }}
         run: |
           echo "Building quay.io/jkube/${{ matrix.image.name }}:${TAG}"
@@ -50,3 +64,50 @@ jobs:
         if: success()
         run: |
           ./scripts/test-${{ matrix.image.name }}.sh
+      - name: Trivy vulnerability report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db'
+        with:
+          image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '0'
+          format: 'json'
+          output: '${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json'
+      - name: Generate SBOM
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.TAG }}'
+          format: 'cyclonedx'
+          output: '${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json'
+      - name: Trivy scan summary
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT_FILE: ${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json
+          IMAGE_LABEL: ${{ matrix.image.name }} (${{ env.ARCH }})
+        with:
+          script: |
+            const fs = require('fs');
+            const {REPORT_FILE, IMAGE_LABEL} = process.env;
+            if (!fs.existsSync(REPORT_FILE)) return;
+            const data = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf8'));
+            const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
+            const critical = vulns.filter(v => v.Severity === 'CRITICAL');
+            const high = vulns.filter(v => v.Severity === 'HIGH');
+            const summary = core.summary
+              .addHeading(`${IMAGE_LABEL}: ${critical.length} critical, ${high.length} high`, 3);
+            if (critical.length + high.length > 0) {
+              summary.addTable([
+                [{data: 'CVE', header: true}, {data: 'Severity', header: true}, {data: 'Package', header: true}, {data: 'Installed', header: true}, {data: 'Fixed', header: true}],
+                ...critical.concat(high).map(v => [v.VulnerabilityID, v.Severity, v.PkgName, v.InstalledVersion, v.FixedVersion || 'N/A'])
+              ]);
+            }
+            await summary.write();
+      - name: Upload Trivy report and SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: security-${{ matrix.image.name }}-${{ env.ARCH }}
+          path: |
+            ${{ matrix.image.name }}-${{ env.ARCH }}.trivy-report.json
+            ${{ matrix.image.name }}-${{ env.ARCH }}.sbom.json

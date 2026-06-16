@@ -2,7 +2,10 @@
 
 This repository hosts part of the container images used by [Eclipse JKube](https://github.com/eclipse-jkube/jkube).
 
-These images are available on [Quay.io](https://quay.io/organization/jkube)
+These images are available on [Quay.io](https://quay.io/organization/jkube).
+
+Published images are multi-arch (`linux/amd64` + `linux/arm64`), except `jkube-jetty9` which is `linux/amd64` only.
+CycloneDX SBOMs for each image and architecture are available as assets on each [GitHub release](https://github.com/eclipse-jkube/jkube-images/releases)
 
 ## Available images
 
