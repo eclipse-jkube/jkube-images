@@ -6,6 +6,7 @@ on:
     types: [completed]
 
 permissions:
+  actions: read
   pull-requests: write
 
 jobs:
@@ -28,17 +29,18 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            const headSha = context.payload.workflow_run.head_sha;
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: context.payload.workflow_run.id,
+              commit_sha: headSha,
             });
-            const prs = context.payload.workflow_run.pull_requests;
-            if (!prs || prs.length === 0) {
-              core.setFailed('No PR associated with this workflow run');
+            const open = prs.filter(p => p.state === 'open');
+            if (open.length === 0) {
+              core.setFailed('No open PR associated with this workflow run');
               return;
             }
-            core.setOutput('number', prs[0].number);
+            core.setOutput('number', open[0].number);
       - name: Build and post comment
         if: steps.pr.outputs.number
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
