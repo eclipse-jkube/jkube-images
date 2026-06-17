@@ -23,7 +23,7 @@ jobs:
             args: ''
           - name: 'jkube-java-11'
             args: ''
-          - name: 'jkube-jetty'
+          - name: 'jkube-jetty12'
             args: ''
           - name: 'jkube-jetty9'
             args: ''

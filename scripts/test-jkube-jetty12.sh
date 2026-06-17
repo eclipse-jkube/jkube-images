@@ -5,7 +5,7 @@ trap 'exit' ERR
 BASEDIR=$(dirname "$BASH_SOURCE")
 source "$BASEDIR/common.sh"
 
-IMAGE="quay.io/jkube/jkube-jetty:$TAG_OR_LATEST"
+IMAGE="quay.io/jkube/jkube-jetty12:$TAG_OR_LATEST"
 
 assertMatches "$(dockerRun 'id')" 'uid=1000' || reportError "Invalid run user, should be 1000"
 
