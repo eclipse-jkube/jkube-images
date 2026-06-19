@@ -57,7 +57,7 @@ jobs:
                 return;
               }
             }
-            core.warning('Could not resolve PR number — summary will be posted as job summary only');
+            core.warning(`Could not resolve PR number — summary will be posted as job summary only (head_sha=${run.head_sha}, head_branch=${headBranch}, head_owner=${headOwner})`);
       - name: Build and post summary
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
@@ -68,13 +68,28 @@ jobs:
             const globber = await glob.create('*.trivy-report.json');
             const files = await globber.glob();
             if (files.length === 0) {
-              core.info('No Trivy report files found — skipping');
+              core.warning('No Trivy report files found — skipping');
               return;
             }
             files.sort();
 
             const rows = [];
             const details = [];
+
+            // Trivy report contents and the artifact file names are
+            // attacker-controlled on fork PRs, and this output is rendered both
+            // as a job summary and as a bot-authored PR comment. Escape every
+            // untrusted field so it cannot break out of the Markdown table /
+            // <details> block, forge rows, or inject the HTML comment marker.
+            const md = (v) => String(v ?? 'N/A')
+              .replace(/[\r\n]+/g, ' ')
+              .slice(0, 200)
+              .replace(/\\/g, '\\\\')
+              .replace(/\|/g, '\\|')
+              .replace(/`/g, '\\`')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .trim();
 
             for (const file of files) {
               const basename = file.replace(/.*\//, '').replace('.trivy-report.json', '');
@@ -90,13 +105,13 @@ jobs:
               const vulns = (data.Results || []).flatMap(r => r.Vulnerabilities || []);
               const critical = vulns.filter(v => v.Severity === 'CRITICAL');
               const high = vulns.filter(v => v.Severity === 'HIGH');
-              rows.push(`| ${image} | ${arch} | ${critical.length} | ${high.length} |`);
+              rows.push(`| ${md(image)} | ${md(arch)} | ${critical.length} | ${high.length} |`);
 
               if (critical.length + high.length > 0) {
                 const cveRows = critical.concat(high)
-                  .map(v => `| ${v.VulnerabilityID} | ${v.Severity} | ${v.PkgName} | ${v.InstalledVersion} | ${v.FixedVersion || 'N/A'} |`)
+                  .map(v => `| ${md(v.VulnerabilityID)} | ${md(v.Severity)} | ${md(v.PkgName)} | ${md(v.InstalledVersion)} | ${md(v.FixedVersion || 'N/A')} |`)
                   .join('\n');
-                details.push(`#### ${image} (${arch})\n\n| CVE | Severity | Package | Installed | Fixed |\n|-----|----------|---------|-----------|-------|\n${cveRows}\n`);
+                details.push(`#### ${md(image)} (${md(arch)})\n\n| CVE | Severity | Package | Installed | Fixed |\n|-----|----------|---------|-----------|-------|\n${cveRows}\n`);
               }
             }
 
@@ -121,7 +136,10 @@ jobs:
               repo: context.repo.repo,
               issue_number: prNumber,
             });
-            const existing = comments.find(c => c.body?.includes(marker));
+            // Only ever update the bot's own marker comment. A substring match
+            // would let a contributor pre-seed a comment containing the marker
+            // and have the trusted bot overwrite it.
+            const existing = comments.find(c => c.user?.type === 'Bot' && c.body?.startsWith(marker));
 
             if (existing) {
               await github.rest.issues.updateComment({
