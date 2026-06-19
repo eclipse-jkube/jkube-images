@@ -1,4 +1,4 @@
-name: Post Security Comment
+name: Post Security Summary
 
 on:
   workflow_run:
@@ -10,11 +10,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  post-comment:
-    name: Post Trivy summary on PR
-    if: >-
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
+  post-summary:
+    name: Post Trivy summary
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Download security artifacts
@@ -24,25 +22,43 @@ jobs:
           merge-multiple: true
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Get PR number
+      - name: Resolve PR number
         id: pr
+        if: github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const headSha = context.payload.workflow_run.head_sha;
-            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: headSha,
-            });
-            const open = prs.filter(p => p.state === 'open');
-            if (open.length === 0) {
-              core.setFailed('No open PR associated with this workflow run');
+            const run = context.payload.workflow_run;
+            if (run.pull_requests && run.pull_requests.length > 0) {
+              core.setOutput('number', run.pull_requests[0].number);
               return;
             }
-            core.setOutput('number', open[0].number);
-      - name: Build and post comment
-        if: steps.pr.outputs.number
+            const { data: associated } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: run.head_sha,
+            });
+            const open = associated.filter(p => p.state === 'open');
+            if (open.length > 0) {
+              core.setOutput('number', open[0].number);
+              return;
+            }
+            const headOwner = run.head_repository?.owner?.login;
+            const headBranch = run.head_branch;
+            if (headOwner && headBranch) {
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${headOwner}:${headBranch}`,
+              });
+              if (prs.length > 0) {
+                core.setOutput('number', prs[0].number);
+                return;
+              }
+            }
+            core.warning('Could not resolve PR number — summary will be posted as job summary only');
+      - name: Build and post summary
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
@@ -52,7 +68,7 @@ jobs:
             const globber = await glob.create('*.trivy-report.json');
             const files = await globber.glob();
             if (files.length === 0) {
-              core.info('No Trivy report files found — skipping comment');
+              core.info('No Trivy report files found — skipping');
               return;
             }
             files.sort();
@@ -90,9 +106,15 @@ jobs:
             }
             body += `\n> Scanned with Trivy v0.36.0 | unfixed CVEs excluded`;
 
+            const summary = core.summary.addRaw(body);
+            await summary.write();
+            core.info('Posted job summary');
+
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            if (!prNumber) return;
+
             const marker = '<!-- trivy-security-scan -->';
-            body = `${marker}\n${body}`;
+            const commentBody = `${marker}\n${body}`;
 
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -106,7 +128,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
-                body,
+                body: commentBody,
               });
               core.info(`Updated existing comment ${existing.id}`);
             } else {
@@ -114,7 +136,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body,
+                body: commentBody,
               });
               core.info(`Posted new comment on PR #${prNumber}`);
             }
