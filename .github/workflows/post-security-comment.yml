@@ -57,7 +57,7 @@ jobs:
                 return;
               }
             }
-            core.warning('Could not resolve PR number — summary will be posted as job summary only');
+            core.warning(`Could not resolve PR number — summary will be posted as job summary only (head_sha=${run.head_sha}, head_branch=${headBranch}, head_owner=${headOwner})`);
       - name: Build and post summary
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
@@ -68,7 +68,7 @@ jobs:
             const globber = await glob.create('*.trivy-report.json');
             const files = await globber.glob();
             if (files.length === 0) {
-              core.info('No Trivy report files found — skipping');
+              core.warning('No Trivy report files found — skipping');
               return;
             }
             files.sort();
