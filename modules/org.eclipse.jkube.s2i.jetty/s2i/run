@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+appDir=${DEPLOY_DIR:-/deployments}
+echo "Checking *.war in $appDir"
+if [ -d ${appDir} ]; then
+  target="${JETTY_BASE}/webapps"
+  for i in ${appDir}/*.war; do
+     file=$(basename ${i})
+     echo "Linking $i --> $target"
+     if [ -f "${target}/${file}" ]; then
+         rm "${target}/${file}"
+     fi
+     dir=$(basename ${i} .war)
+     if [ x${dir} != x ] && [ -d "${target}/${dir}" ]; then
+         rm -r "$target/${dir}"
+     fi
+     ln -s ${i} "${target}/${file}"
+  done
+fi
+
+if [ "${JAVA_ENABLE_DEBUG:-false}" = "true" ]; then
+  echo "Running Jetty in debug mode"
+  suspend_mode="n"
+  if ! echo "${JAVA_DEBUG_SUSPEND:-n}" | grep -q -e '^\(false\|n\|no\|0\)$'; then
+    suspend_mode="y"
+  fi
+  DEBUG_OPTS="-Xdebug -agentlib:jdwp=transport=dt_socket,address=${JAVA_DEBUG_PORT:-5005},server=y,suspend=${suspend_mode}"
+fi
+
+eval exec java ${DEBUG_OPTS} -jar "$JETTY_HOME/start.jar"
