@@ -8,6 +8,7 @@ target="${CATALINA_HOME}/${webappsDir}"
 echo "Checking *.war in $appDir"
 if [ -d ${appDir} ]; then
   for i in ${appDir}/*.war; do
+     [ -e "$i" ] || continue
      file=$(basename ${i})
      echo "Linking $i --> $target"
      if [ -f "${target}/${file}" ]; then

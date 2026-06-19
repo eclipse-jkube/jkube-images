@@ -7,6 +7,7 @@ echo "Checking *.war in $appDir"
 if [ -d ${appDir} ]; then
   target="${JETTY_BASE}/webapps"
   for i in ${appDir}/*.war; do
+     [ -e "$i" ] || continue
      file=$(basename ${i})
      echo "Linking $i --> $target"
      if [ -f "${target}/${file}" ]; then

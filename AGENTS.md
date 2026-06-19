@@ -169,7 +169,7 @@ For full runtime behavior, push an app into `/deployments` (or wire it up via th
 ├── modules/                   # Reusable CEKit modules (referenced from descriptors)
 │   ├── org.eclipse.jkube.*/   # JKube-native modules — TARGET END STATE for new work
 │   ├── jboss.container.*/     # Local shadow-forks of cct_module modules (transitional)
-│   └── {run-java,s2i-tomcat,s2i-jetty,s2i-karaf}/  # Legacy short-named project modules
+│   └── {run-java,s2i-tomcat,s2i-karaf}/  # Legacy short-named project modules
 ├── scripts/
 │   ├── common.sh              # Shared assertion helpers (dockerRun, assertContains, …)
 │   └── test-<image>.sh        # One smoke test per image
@@ -185,7 +185,7 @@ Three patterns coexist in `modules/`. New code should always use **`org.eclipse.
 
 1. **`org.eclipse.jkube.<name>/`** — JKube-native, the target end state. Use this for every new module and every rewrite. Header comments may reference the original `cct_module` blob (`References: https://github.com/jboss-openshift/cct_module/blob/<sha>/…`) for traceability.
 2. **`jboss.container.<name>/`** — Local shadow-forks of cct_module modules. These exist *only* because CEKit resolves modules by name and we need to override what the live `cct_module@0.45.5` dependency would otherwise install. As soon as a descriptor stops referencing the cct_module repository, the corresponding shadow-forks should be renamed to `org.eclipse.jkube.<name>`. Don't create new modules under this namespace.
-3. **Bare-name (`run-java/`, `s2i-tomcat/`, `s2i-jetty/`, `s2i-karaf/`)** — Project-local modules predating the namespace convention. Don't add new ones. Existing ones can be renamed under `org.eclipse.jkube.*` opportunistically (coordinate with the maintainer since descriptors reference them by name).
+3. **Bare-name (`run-java/`, `s2i-tomcat/`, `s2i-karaf/`)** — Project-local modules predating the namespace convention. Don't add new ones. Existing ones can be renamed under `org.eclipse.jkube.*` opportunistically (coordinate with the maintainer since descriptors reference them by name). `s2i-jetty` was migrated to the versioned `org.eclipse.jkube.s2i.jetty` module (`9/`, `12/`) consumed by `jkube-jetty9` and `jkube-jetty12`.
 
 All four Java image descriptors (`jkube-java-11`, `jkube-java-17`, `jkube-java`, `jkube-java-25`) now use `org.eclipse.jkube.*` modules uniformly. Prometheus `1.5.0` is provided transitively via `org.eclipse.jkube.s2i.bash`. The only version difference is that `jkube-java-11` is pinned to Jolokia **2.1.2** by JDK-bytecode necessity — Jolokia 2.4+ is compiled to JDK 17 bytecode and will not load on JDK 11.
 

@@ -28,7 +28,7 @@ envs:
     value: "$PATH:$CATALINA_HOME/bin:/usr/local/s2i"
 
 packages:
-  manager: microdnf
+  manager: apt-get
 
 modules:
   repositories:

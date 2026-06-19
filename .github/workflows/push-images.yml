@@ -111,6 +111,8 @@ jobs:
             arches: 'amd64 arm64'
           - name: 'jkube-java-11'
             arches: 'amd64 arm64'
+          - name: 'jkube-jetty12'
+            arches: 'amd64 arm64'
           - name: 'jkube-jetty9'
             arches: 'amd64'
           - name: 'jkube-karaf'

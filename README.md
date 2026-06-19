@@ -93,6 +93,10 @@ https://quay.io/repository/jkube/jkube-jetty12
 Base image for Jetty 12 webapp deployments, to be used by any `WebAppGenerator` & `JettyAppSeverHandler` implementation.
 Based on Jetty 12.0.x with Jakarta EE 10 (Servlet 6.x) support.
 
+Only the `ee10-deploy` module is enabled, so this image deploys **Jakarta EE 10 / Servlet 6.x** web applications
+(`jakarta.*` namespace) exclusively. Unlike the `jkube-tomcat` (Tomcat 10) image, it performs **no `javax.*` to
+`jakarta.*` translation**: legacy `javax.*` WARs will not deploy and must be migrated to Jakarta EE 10 first.
+
 ### jkube-jetty9
 
 https://quay.io/repository/jkube/jkube-jetty9

@@ -7,7 +7,7 @@ source "$BASEDIR/common.sh"
 
 IMAGE="quay.io/jkube/jkube-jetty12:$TAG_OR_LATEST"
 
-assertMatches "$(dockerRun 'id')" 'uid=1000' || reportError "Invalid run user, should be 1000"
+assertContains "$(dockerRun 'id')" "uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu)" || reportError "Invalid run user, should be 1000"
 
 java_version="$(dockerRun 'java -version')"
 assertMatches "$java_version" 'openjdk version "21.[0-9]+.[0-9]+"' || reportError "Invalid Java version:\n\n$java_version"
@@ -16,6 +16,7 @@ assertMatches "$java_version" 'openjdk version "21.[0-9]+.[0-9]+"' || reportErro
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
 assertContains "$s2i" "assemble" || reportError "assemble not found"
 assertContains "$s2i" "run" || reportError "run not found"
+assertMatches "$s2i" '^-rwx.* run$' || reportError "/usr/local/s2i/run is not executable"
 assembleScript="$(dockerRun 'cat /usr/local/s2i/assemble')"
 assertContains "$assembleScript" 'copy_dir bin$' || reportError "Invalid s2i assemble script"
 assertContains "$assembleScript" 'copy_dir deployments$' || reportError "Invalid s2i assemble script"
@@ -32,6 +33,8 @@ assertContains "$jetty_modules" "ee10-deploy" || reportError "ee10-deploy module
 # Webapps directory
 webapps_dir="$(dockerRun 'ls /var/lib/jetty/')"
 assertContains "$webapps_dir" "webapps" || reportError "webapps directory not found in JETTY_BASE"
+assertContains "$(dockerRun 'stat -c %u /var/lib/jetty/webapps')" '^1000$' \
+  || reportError "JETTY_BASE/webapps should be owned by uid 1000"
 
 # Env
 env_variables="$(dockerRun 'env')"

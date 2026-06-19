@@ -34,13 +34,14 @@ envs:
     value: "$PATH:$JETTY_HOME/bin:/usr/local/s2i"
 
 packages:
-  manager: microdnf
+  manager: apk
 
 modules:
   repositories:
     - path: modules
   install:
-    - name: s2i-jetty
+    - name: org.eclipse.jkube.s2i.jetty
+      version: "9"
 
 ports:
   - value: 8080
