@@ -1,0 +1,5 @@
+schema_version: 1
+version: "9"
+name: org.eclipse.jkube.s2i.jetty
+execute:
+  - script: configure

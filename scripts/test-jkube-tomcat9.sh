@@ -16,10 +16,17 @@ assertMatches "$java_version" 'openjdk version "21.[0-9]+.[0-9]+".*' || reportEr
 s2i="$(dockerRun 'ls -la /usr/local/s2i/')"
 assertContains "$s2i" "assemble" || reportError "assemble not found"
 assertContains "$s2i" "run" || reportError "run not found"
+assertMatches "$s2i" '^-rwx.* run$' || reportError "/usr/local/s2i/run is not executable"
 assembleScript="$(dockerRun 'cat /usr/local/s2i/assemble')"
 assertContains "$assembleScript" 'copy_dir bin$' || reportError "Invalid s2i assemble script"
 assertContains "$assembleScript" 'copy_dir deployments$' || reportError "Invalid s2i assemble script"
 assertContains "$assembleScript" 'copy_dir maven$' || reportError "Invalid s2i assemble script"
+
+# Legacy webapps directory
+tomcatDir="$(dockerRun 'ls /usr/local/tomcat/')"
+assertContains "$tomcatDir" "^webapps-javaee$" || reportError "webapps-javaee not found"
+assertContains "$(dockerRun 'stat -c %u /usr/local/tomcat/webapps-javaee')" '^1000$' \
+  || reportError "webapps-javaee should be owned by uid 1000"
 
 # Env
 env_variables="$(dockerRun 'env')"
