@@ -49,8 +49,8 @@ assertMatches "$java_default_options" '^-XX:MaxRAMPercentage=80.0 -XX:\+UseParal
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 # shellcheck disable=SC2016
-# Force exit 0 — run-java.sh exits non-zero (no main manifest in test jar) and
-# set -E propagates the failure through dockerRunE. We only assert the command line.
+# run-java.sh exits non-zero (jrt-fs.jar has no main manifest); the `; exit 0`
+# wrap forces the container to exit 0. We only assert the captured command line.
 run_java_exec="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /opt/jboss/container/java/run/run-java.sh); exit 0')" || reportError "Failed to get run_java_exec"
 assertMatches "$run_java_exec" ".+java -XX:MaxRAMPercentage=80.0 -XX:\+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar.+" \
   || reportError "Invalid run_java_exec:\n\n$run_java_exec"
@@ -130,8 +130,8 @@ assertContains "$s2i" "assemble" || reportError "assemble not found"
 assertContains "$s2i" "run" || reportError "run not found"
 assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' || reportError "Invalid s2i assemble script"
 # shellcheck disable=SC2016
-# Force exit 0 — s2i/run invokes run-java.sh which exits non-zero (no main manifest
-# in test jar) and set -E propagates the failure through dockerRunE. We only assert the command line.
+# s2i/run runs run-java.sh, which exits non-zero (jrt-fs.jar has no main
+# manifest); the `; exit 0` wrap forces exit 0. We only assert the command line.
 s2i_run="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /usr/local/s2i/run); exit 0')" || reportError "Failed to get s2i_run"
 assertJolokia="-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties"
 assertPrometheus="-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=9779:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml"
