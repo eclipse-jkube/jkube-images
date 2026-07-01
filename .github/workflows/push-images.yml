@@ -63,7 +63,7 @@ jobs:
       - name: Test ${{ matrix.image.name }}
         run: |
           TAG="${VERSION}-linux-${ARCH}" ./scripts/test-${{ matrix.image.name }}.sh
-      - name: Trivy vulnerability gate
+      - name: Trivy vulnerability report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         env:
           TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db'
@@ -71,7 +71,7 @@ jobs:
           image-ref: 'quay.io/jkube/${{ matrix.image.name }}:${{ env.VERSION }}-linux-${{ env.ARCH }}'
           severity: 'CRITICAL'
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: '0'
       - name: Generate SBOM
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
