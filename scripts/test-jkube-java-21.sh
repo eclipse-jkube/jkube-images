@@ -9,7 +9,7 @@ IMAGE="quay.io/jkube/jkube-java-21:$TAG_OR_LATEST"
 env_variables="$(dockerRun 'env')"
 
 # User
-assertMatches "$(dockerRun 'id')" 'uid=1000([^ ]*)? gid=0\(root\) groups=0\(root\)' || reportError "Invalid run user, should be 1000"
+assertMatches "$(dockerRun 'id')" 'uid=1000(\([^)]*\))? gid=0\(root\) groups=0\(root\)' || reportError "Invalid run user, should be 1000"
 assertMatches "$(dockerRun 'pwd')" '/home/jboss' || reportError "Invalid home directory"
 
 # Java (xxx.openjdk.jdk)
@@ -53,6 +53,8 @@ assertContains "$debug_options" "[-]agentlib:jdwp=transport=dt_socket,server=y,s
 run_java="$(dockerRun 'ls -la /opt/jboss/container/java/run/')"
 assertContains "$run_java" "run-java.sh" || reportError "run-java.sh not found"
 # shellcheck disable=SC2016
+# run-java.sh exits non-zero (jrt-fs.jar has no main manifest); the `; exit 0`
+# wrap forces the container to exit 0. We only assert the captured command line.
 run_java_exec="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /opt/jboss/container/java/run/run-java.sh); exit 0')" || reportError "Failed to get run_java_exec"
 assertMatches "$run_java_exec" ".+java -XX:MaxRAMPercentage=80.0 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:\+ExitOnOutOfMemoryError -cp \".\" -jar.+" \
   || reportError "Invalid run_java_exec:\n\n$run_java_exec"
@@ -132,6 +134,8 @@ assertContains "$s2i" "assemble" || reportError "assemble not found"
 assertContains "$s2i" "run" || reportError "run not found"
 assertContains "$(dockerRun 'cat /usr/local/s2i/assemble')" 'maven_s2i_build$' || reportError "Invalid s2i assemble script"
 # shellcheck disable=SC2016
+# s2i/run runs run-java.sh, which exits non-zero (jrt-fs.jar has no main
+# manifest); the `; exit 0` wrap forces exit 0. We only assert the command line.
 s2i_run="$(dockerRunE /bin/bash -c '(JAVA_APP_JAR=$JAVA_HOME/lib/jrt-fs.jar /usr/local/s2i/run); exit 0')" || reportError "Failed to get s2i_run"
 assertJolokia="-javaagent:/usr/share/java/jolokia-jvm-agent/jolokia-jvm.jar=config=/opt/jboss/container/jolokia/etc/jolokia.properties"
 assertPrometheus="-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=9779:/opt/jboss/container/prometheus/etc/jmx-exporter-config.yaml"
